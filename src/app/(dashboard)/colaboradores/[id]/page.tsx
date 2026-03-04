@@ -1,14 +1,19 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2 } from 'lucide-react';
 
-import { useColaborador } from '@/lib/hooks/use-colaboradores';
+import { useColaborador, useUpdateColaborador, useDeleteColaborador } from '@/lib/hooks/use-colaboradores';
 import { formatDate } from '@/lib/utils/format';
 
 import { PageHeader } from '@/components/shared/page-header';
 import { StatusBadge } from '@/components/shared/status-badge';
+import { FormDialog } from '@/components/shared/form-dialog';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { ColaboradorForm } from '@/components/forms/colaborador-form';
 import { Button } from '@/components/ui/button';
+import type { CreateColaboradorInput } from '@/lib/validations/colaborador';
 import {
   Card,
   CardContent,
@@ -72,6 +77,10 @@ export default function ColaboradorDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { data, isLoading } = useColaborador(params.id);
+  const updateMutation = useUpdateColaborador();
+  const deleteMutation = useDeleteColaborador();
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   if (isLoading) {
     return <DetailSkeleton />;
@@ -96,7 +105,7 @@ export default function ColaboradorDetailPage() {
   const colaborador = data as typeof data & {
     equipos?: Array<{ id: string; serialNumber: string; hostname: string | null; tipo: string; marca: string; modelo: string; estado: string }>;
     celulares?: Array<{ id: string; imei: string; tipo: string; marca: string; modelo: string; estado: string }>;
-    monitores?: Array<{ id: string; serialNumber: string; marca: string; modelo: string }>;
+    monitores?: Array<{ id: string; serialNumber: string; marca: string; modelo: string; pulgadas: string | null }>;
   };
 
   return (
@@ -106,6 +115,12 @@ export default function ColaboradorDetailPage() {
           <StatusBadge status={colaborador.status || 'Active'} />
           <Button variant="outline" onClick={() => router.back()}>
             <ArrowLeft className="size-4" /> Volver
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+            <Pencil className="size-4" /> Editar
+          </Button>
+          <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+            <Trash2 className="size-4" /> Eliminar
           </Button>
         </div>
       </PageHeader>
@@ -195,7 +210,10 @@ export default function ColaboradorDetailPage() {
 
         <TabsContent value="equipos">
           <Card>
-            <CardContent className="pt-6">
+            <CardHeader>
+              <CardTitle>Equipos Asignados</CardTitle>
+            </CardHeader>
+            <CardContent>
               {colaborador.equipos && colaborador.equipos.length > 0 ? (
                 <Table>
                   <TableHeader>
@@ -240,7 +258,10 @@ export default function ColaboradorDetailPage() {
 
         <TabsContent value="celulares">
           <Card>
-            <CardContent className="pt-6">
+            <CardHeader>
+              <CardTitle>Celulares Asignados</CardTitle>
+            </CardHeader>
+            <CardContent>
               {colaborador.celulares && colaborador.celulares.length > 0 ? (
                 <Table>
                   <TableHeader>
@@ -279,7 +300,10 @@ export default function ColaboradorDetailPage() {
 
         <TabsContent value="monitores">
           <Card>
-            <CardContent className="pt-6">
+            <CardHeader>
+              <CardTitle>Monitores Asignados</CardTitle>
+            </CardHeader>
+            <CardContent>
               {colaborador.monitores && colaborador.monitores.length > 0 ? (
                 <Table>
                   <TableHeader>
@@ -287,6 +311,7 @@ export default function ColaboradorDetailPage() {
                       <TableHead>Serial</TableHead>
                       <TableHead>Marca</TableHead>
                       <TableHead>Modelo</TableHead>
+                      <TableHead>Pulgadas</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -297,6 +322,7 @@ export default function ColaboradorDetailPage() {
                         </TableCell>
                         <TableCell>{monitor.marca}</TableCell>
                         <TableCell>{monitor.modelo}</TableCell>
+                        <TableCell>{monitor.pulgadas || '-'}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -310,6 +336,37 @@ export default function ColaboradorDetailPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      <FormDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        title="Editar Colaborador"
+        description="Modifique los datos del colaborador."
+      >
+        <ColaboradorForm
+          defaultValues={colaborador as unknown as Record<string, unknown>}
+          onSubmit={(formData: CreateColaboradorInput) => {
+            updateMutation.mutate(
+              { id: colaborador.id, data: formData as unknown as Record<string, unknown> },
+              { onSuccess: () => setEditOpen(false) }
+            );
+          }}
+          isLoading={updateMutation.isPending}
+        />
+      </FormDialog>
+
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Eliminar Colaborador"
+        description={`¿Está seguro de que desea eliminar al colaborador ${colaborador.nombre}? Esta acción no se puede deshacer.`}
+        onConfirm={() => {
+          deleteMutation.mutate(colaborador.id, {
+            onSuccess: () => router.push('/colaboradores'),
+          });
+        }}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }

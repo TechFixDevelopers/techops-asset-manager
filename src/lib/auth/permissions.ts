@@ -13,13 +13,14 @@ export type Resource =
   | 'tickets'
   | 'app_users'
   | 'empresas'
-  | 'sitios';
+  | 'sitios'
+  | 'lineas';
 
 const PERMISSIONS: Record<Perfil, Record<Action, Resource[]>> = {
   LAS: {
     read: [
       'equipos', 'celulares', 'monitores', 'insumos', 'colaboradores',
-      'movimientos', 'cortes', 'tickets', 'empresas', 'sitios',
+      'movimientos', 'cortes', 'tickets', 'empresas', 'sitios', 'lineas',
     ],
     create: [],
     update: [],
@@ -28,26 +29,26 @@ const PERMISSIONS: Record<Perfil, Record<Action, Resource[]>> = {
   SAZ: {
     read: [
       'equipos', 'celulares', 'monitores', 'insumos', 'colaboradores',
-      'movimientos', 'cortes', 'tickets', 'empresas', 'sitios',
+      'movimientos', 'cortes', 'tickets', 'empresas', 'sitios', 'lineas',
     ],
-    create: ['equipos', 'celulares', 'monitores', 'insumos', 'movimientos', 'cortes', 'tickets'],
-    update: ['equipos', 'celulares', 'monitores', 'insumos', 'cortes'],
+    create: ['equipos', 'celulares', 'monitores', 'insumos', 'movimientos', 'cortes', 'tickets', 'lineas'],
+    update: ['equipos', 'celulares', 'monitores', 'insumos', 'cortes', 'lineas'],
     delete: [],
   },
   ADMIN: {
     read: [
       'equipos', 'celulares', 'monitores', 'insumos', 'colaboradores',
-      'movimientos', 'cortes', 'tickets', 'empresas', 'sitios', 'app_users',
+      'movimientos', 'cortes', 'tickets', 'empresas', 'sitios', 'app_users', 'lineas',
     ],
     create: [
       'equipos', 'celulares', 'monitores', 'insumos', 'movimientos',
-      'cortes', 'tickets', 'empresas', 'sitios', 'app_users', 'colaboradores',
+      'cortes', 'tickets', 'empresas', 'sitios', 'app_users', 'colaboradores', 'lineas',
     ],
     update: [
       'equipos', 'celulares', 'monitores', 'insumos', 'cortes', 'empresas',
-      'sitios', 'app_users', 'colaboradores',
+      'sitios', 'app_users', 'colaboradores', 'lineas',
     ],
-    delete: ['equipos', 'celulares', 'monitores', 'insumos', 'empresas', 'sitios', 'app_users'],
+    delete: ['equipos', 'celulares', 'monitores', 'insumos', 'empresas', 'sitios', 'app_users', 'lineas'],
   },
 };
 

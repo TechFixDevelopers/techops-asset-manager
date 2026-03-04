@@ -11,6 +11,7 @@ import {
   useUpdateColaborador,
   useDeleteColaborador,
 } from '@/lib/hooks/use-colaboradores';
+import { useEmpresas, useSitios } from '@/lib/hooks/use-catalogos';
 import type { CreateColaboradorInput } from '@/lib/validations/colaborador';
 
 import { exportToExcel } from '@/lib/utils/excel-export';
@@ -22,6 +23,13 @@ import { FormDialog } from '@/components/shared/form-dialog';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { ColaboradorForm } from '@/components/forms/colaborador-form';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { colaboradoresColumns } from '@/components/tables/columns/colaboradores-columns';
 
 type ColaboradorRow = (typeof colaboradoresColumns extends ColumnDef<infer T>[] ? T : never);
@@ -32,11 +40,22 @@ export default function ColaboradoresPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState('');
+  const [filterEmpresa, setFilterEmpresa] = useState('');
+  const [filterSitio, setFilterSitio] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selected, setSelected] = useState<ColaboradorRow | null>(null);
 
-  const { data, isLoading } = useColaboradores({ page, pageSize, search });
+  const { data: empresasData } = useEmpresas();
+  const { data: sitiosData } = useSitios();
+
+  const { data, isLoading } = useColaboradores({
+    page,
+    pageSize,
+    search,
+    empresaId: filterEmpresa || undefined,
+    sitioId: filterSitio || undefined,
+  });
   const createMutation = useCreateColaborador();
   const updateMutation = useUpdateColaborador();
   const deleteMutation = useDeleteColaborador();
@@ -111,6 +130,28 @@ export default function ColaboradoresPage() {
           <Plus className="size-4" /> Nuevo
         </Button>
       </PageHeader>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Select value={filterEmpresa} onValueChange={(v) => { setFilterEmpresa(v === '__all__' ? '' : v); setPage(1); }}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Empresa" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todas las empresas</SelectItem>
+            {(empresasData ?? []).map((e) => <SelectItem key={e.id} value={e.id}>{e.nombre}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <Select value={filterSitio} onValueChange={(v) => { setFilterSitio(v === '__all__' ? '' : v); setPage(1); }}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Sitio" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todos los sitios</SelectItem>
+            {(sitiosData ?? []).map((s) => <SelectItem key={s.id} value={s.id}>{s.nombre}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
 
       <DataTable
         columns={columnsWithActions}

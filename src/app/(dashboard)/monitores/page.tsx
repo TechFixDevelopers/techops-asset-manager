@@ -5,6 +5,13 @@ import { useRouter } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { exportToExcel } from '@/lib/utils/excel-export';
 import { ExportButton } from '@/components/shared/export-button';
 import { PageHeader } from '@/components/shared/page-header';
@@ -20,6 +27,7 @@ import {
   useUpdateMonitor,
   useDeleteMonitor,
 } from '@/lib/hooks/use-monitores';
+import { useSitios } from '@/lib/hooks/use-catalogos';
 import type { Monitor } from '@/lib/types/database';
 
 type MonitorRow = Monitor & {
@@ -34,12 +42,22 @@ export default function MonitoresPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
+  const [filterSitio, setFilterSitio] = useState('');
+  const [filterObsoleto, setFilterObsoleto] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selected, setSelected] = useState<MonitorRow | null>(null);
 
+  const { data: sitiosData } = useSitios();
+
   // Queries & mutations
-  const { data, isLoading } = useMonitores({ page, pageSize, search });
+  const { data, isLoading } = useMonitores({
+    page,
+    pageSize,
+    search,
+    sitioId: filterSitio || undefined,
+    obsoleto: filterObsoleto === 'true' ? true : filterObsoleto === 'false' ? false : undefined,
+  });
   const createMutation = useCreateMonitor();
   const updateMutation = useUpdateMonitor();
   const deleteMutation = useDeleteMonitor();
@@ -110,6 +128,29 @@ export default function MonitoresPage() {
           Nuevo monitor
         </Button>
       </PageHeader>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Select value={filterSitio} onValueChange={(v) => { setFilterSitio(v === '__all__' ? '' : v); setPage(1); }}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Sitio" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todos los sitios</SelectItem>
+            {(sitiosData ?? []).map((s) => <SelectItem key={s.id} value={s.id}>{s.nombre}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <Select value={filterObsoleto} onValueChange={(v) => { setFilterObsoleto(v === '__all__' ? '' : v); setPage(1); }}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Obsoleto" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todos</SelectItem>
+            <SelectItem value="true">Si</SelectItem>
+            <SelectItem value="false">No</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       <DataTable
         columns={columnsWithActions}

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -16,8 +16,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { FormDialog } from '@/components/shared/form-dialog';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { MonitorForm } from '@/components/forms/monitor-form';
 import { MovimientoForm } from '@/components/forms/movimiento-form';
-import { useMonitor } from '@/lib/hooks/use-monitores';
+import { useMonitor, useUpdateMonitor, useDeleteMonitor } from '@/lib/hooks/use-monitores';
 import { useCreateMovimiento } from '@/lib/hooks/use-movimientos';
 import { formatDate, formatDateTime } from '@/lib/utils/format';
 import type { CreateMovimientoInput } from '@/lib/validations/movimiento';
@@ -75,7 +77,11 @@ export default function MonitorDetailPage() {
   const id = params.id as string;
   const { data, isLoading } = useMonitor(id);
   const createMovimiento = useCreateMovimiento();
+  const updateMutation = useUpdateMonitor();
+  const deleteMutation = useDeleteMonitor();
   const [movFormOpen, setMovFormOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const monitor = data as typeof data & { movimientos?: Movimiento[] };
 
@@ -110,6 +116,12 @@ export default function MonitorDetailPage() {
         ) : (
           <Badge variant="secondary">Activo</Badge>
         )}
+        <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+          <Pencil className="size-4" /> Editar
+        </Button>
+        <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+          <Trash2 className="size-4" /> Eliminar
+        </Button>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -248,6 +260,37 @@ export default function MonitorDetailPage() {
           isLoading={createMovimiento.isPending}
         />
       </FormDialog>
+
+      <FormDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        title="Editar Monitor"
+        description="Modifique los datos del monitor."
+      >
+        <MonitorForm
+          defaultValues={monitor as unknown as Record<string, unknown>}
+          onSubmit={(formData: Record<string, unknown>) => {
+            updateMutation.mutate(
+              { id: monitor.id, data: formData },
+              { onSuccess: () => setEditOpen(false) }
+            );
+          }}
+          isLoading={updateMutation.isPending}
+        />
+      </FormDialog>
+
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Eliminar Monitor"
+        description={`¿Está seguro de que desea eliminar el monitor ${monitor.serialNumber}? Esta acción no se puede deshacer.`}
+        onConfirm={() => {
+          deleteMutation.mutate(monitor.id, {
+            onSuccess: () => router.push('/monitores'),
+          });
+        }}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }

@@ -1,9 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2 } from 'lucide-react';
 
-import { useInsumo } from '@/lib/hooks/use-insumos';
+import { useInsumo, useUpdateInsumo, useDeleteInsumo } from '@/lib/hooks/use-insumos';
 import { formatDate, formatDateTime } from '@/lib/utils/format';
 
 import { Button } from '@/components/ui/button';
@@ -18,12 +19,20 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { FormDialog } from '@/components/shared/form-dialog';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { InsumoForm } from '@/components/forms/insumo-form';
+import type { CreateInsumoInput } from '@/lib/validations/insumo';
 
 export default function InsumoDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
   const { data, isLoading } = useInsumo(id);
+  const updateMutation = useUpdateInsumo();
+  const deleteMutation = useDeleteInsumo();
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -70,6 +79,12 @@ export default function InsumoDetailPage() {
           <h1 className="text-3xl font-bold tracking-tight">{data.nombre}</h1>
           <p className="text-muted-foreground">{data.tipoInsumo}</p>
         </div>
+        <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+          <Pencil className="size-4" /> Editar
+        </Button>
+        <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+          <Trash2 className="size-4" /> Eliminar
+        </Button>
       </div>
 
       {/* Info Cards */}
@@ -168,6 +183,37 @@ export default function InsumoDetailPage() {
           </CardContent>
         </Card>
       )}
+
+      <FormDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        title="Editar Insumo"
+        description="Modifique los datos del insumo."
+      >
+        <InsumoForm
+          defaultValues={data as unknown as Partial<CreateInsumoInput>}
+          onSubmit={(formData: CreateInsumoInput) => {
+            updateMutation.mutate(
+              { id: data.id, data: formData as unknown as Record<string, unknown> },
+              { onSuccess: () => setEditOpen(false) }
+            );
+          }}
+          isLoading={updateMutation.isPending}
+        />
+      </FormDialog>
+
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Eliminar Insumo"
+        description={`¿Está seguro de que desea eliminar el insumo "${data.nombre}"? Esta acción no se puede deshacer.`}
+        onConfirm={() => {
+          deleteMutation.mutate(data.id, {
+            onSuccess: () => router.push('/insumos'),
+          });
+        }}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }

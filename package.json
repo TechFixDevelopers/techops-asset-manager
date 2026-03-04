@@ -13,6 +13,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "npx tsx scripts/seed.ts",
+    "db:import": "npx tsx scripts/import-data.ts",
     "db:create-user": "npx tsx scripts/create-user.ts",
     "test": "vitest run",
     "test:watch": "vitest"

@@ -5,6 +5,13 @@ import { useRouter } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { type ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { exportToExcel } from '@/lib/utils/excel-export';
 import { ExportButton } from '@/components/shared/export-button';
 import { PageHeader } from '@/components/shared/page-header';
@@ -20,6 +27,8 @@ import {
   useUpdateCelular,
   useDeleteCelular,
 } from '@/lib/hooks/use-celulares';
+import { useSitios } from '@/lib/hooks/use-catalogos';
+import { ESTADO_EQUIPO, TIPO_CELULAR } from '@/lib/utils/constants';
 import type { Celular } from '@/lib/types/database';
 
 type CelularRow = Celular & {
@@ -36,12 +45,24 @@ export default function CelularesPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
+  const [filterEstado, setFilterEstado] = useState('');
+  const [filterTipo, setFilterTipo] = useState('');
+  const [filterSitio, setFilterSitio] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selected, setSelected] = useState<CelularRow | null>(null);
 
+  const { data: sitiosData } = useSitios();
+
   // Queries & mutations
-  const { data, isLoading } = useCelulares({ page, pageSize, search });
+  const { data, isLoading } = useCelulares({
+    page,
+    pageSize,
+    search,
+    estado: filterEstado || undefined,
+    tipo: filterTipo || undefined,
+    sitioId: filterSitio || undefined,
+  });
   const createMutation = useCreateCelular();
   const updateMutation = useUpdateCelular();
   const deleteMutation = useDeleteCelular();
@@ -112,6 +133,38 @@ export default function CelularesPage() {
           Nuevo celular
         </Button>
       </PageHeader>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Select value={filterEstado} onValueChange={(v) => { setFilterEstado(v === '__all__' ? '' : v); setPage(1); }}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Estado" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todos los estados</SelectItem>
+            {ESTADO_EQUIPO.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <Select value={filterTipo} onValueChange={(v) => { setFilterTipo(v === '__all__' ? '' : v); setPage(1); }}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todos los tipos</SelectItem>
+            {TIPO_CELULAR.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <Select value={filterSitio} onValueChange={(v) => { setFilterSitio(v === '__all__' ? '' : v); setPage(1); }}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Sitio" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todos los sitios</SelectItem>
+            {(sitiosData ?? []).map((s) => <SelectItem key={s.id} value={s.id}>{s.nombre}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
 
       <DataTable
         columns={columnsWithActions}

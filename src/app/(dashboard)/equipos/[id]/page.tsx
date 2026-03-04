@@ -2,19 +2,22 @@
 
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Pencil, Plus, Trash2 } from 'lucide-react';
 
-import { useEquipo } from '@/lib/hooks/use-equipos';
+import { useEquipo, useUpdateEquipo, useDeleteEquipo } from '@/lib/hooks/use-equipos';
 import { formatDate, formatDateTime } from '@/lib/utils/format';
 
 import { PageHeader } from '@/components/shared/page-header';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { FormDialog } from '@/components/shared/form-dialog';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { EquipoForm } from '@/components/forms/equipo-form';
 import { MovimientoForm } from '@/components/forms/movimiento-form';
 import { useCreateMovimiento } from '@/lib/hooks/use-movimientos';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { CreateMovimientoInput } from '@/lib/validations/movimiento';
+import type { CreateEquipoInput } from '@/lib/validations/equipo';
 import {
   Card,
   CardContent,
@@ -87,7 +90,11 @@ export default function EquipoDetailPage() {
   const router = useRouter();
   const { data, isLoading } = useEquipo(params.id);
   const createMovimiento = useCreateMovimiento();
+  const updateMutation = useUpdateEquipo();
+  const deleteMutation = useDeleteEquipo();
   const [movFormOpen, setMovFormOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   if (isLoading) {
     return <DetailSkeleton />;
@@ -123,6 +130,12 @@ export default function EquipoDetailPage() {
           )}
           <Button variant="outline" onClick={() => router.back()}>
             <ArrowLeft className="size-4" /> Volver
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+            <Pencil className="size-4" /> Editar
+          </Button>
+          <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+            <Trash2 className="size-4" /> Eliminar
           </Button>
         </div>
       </PageHeader>
@@ -306,6 +319,37 @@ export default function EquipoDetailPage() {
           isLoading={createMovimiento.isPending}
         />
       </FormDialog>
+
+      <FormDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        title="Editar Equipo"
+        description="Modifique los datos del equipo."
+      >
+        <EquipoForm
+          defaultValues={equipo as unknown as Record<string, unknown>}
+          onSubmit={(formData: CreateEquipoInput) => {
+            updateMutation.mutate(
+              { id: equipo.id, data: formData as unknown as Record<string, unknown> },
+              { onSuccess: () => setEditOpen(false) }
+            );
+          }}
+          isLoading={updateMutation.isPending}
+        />
+      </FormDialog>
+
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Eliminar Equipo"
+        description={`¿Está seguro de que desea eliminar el equipo ${equipo.serialNumber}? Esta acción no se puede deshacer.`}
+        onConfirm={() => {
+          deleteMutation.mutate(equipo.id, {
+            onSuccess: () => router.push('/equipos'),
+          });
+        }}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }

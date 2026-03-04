@@ -86,6 +86,15 @@ export const PROVEEDOR_CELULAR = [
   'Claro', 'Movistar', 'SIELEN', 'LINEA DEL USUARIO',
 ] as const;
 
+// --- LINEAS ---
+export const TIPO_LINEA = [
+  'CORPORATIVA', 'PERSONAL', 'DATOS', 'INTRAGRUPO',
+] as const;
+
+export const ESTADO_LINEA = [
+  'ACTIVA', 'INACTIVA', 'SUSPENDIDA', 'BAJA',
+] as const;
+
 // --- INSUMOS ---
 export const TIPO_INSUMO = [
   'CARGADOR',
@@ -188,6 +197,15 @@ export const ESTADO_COLORS: Record<string, string> = {
   OFFBOARDING: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
   RECAMBIO: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200',
   TRANSFERENCIA: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
+  // Lineas
+  ACTIVA: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+  INACTIVA: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+  SUSPENDIDA: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+  BAJA: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+  // Perfiles de usuario
+  SAZ: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+  LAS: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
+  ADMIN: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
 };
 
 export const BRAND_COLORS = {

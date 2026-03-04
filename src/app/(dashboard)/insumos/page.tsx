@@ -13,6 +13,7 @@ import {
   useDeleteInsumo,
   useAdjustStock,
 } from '@/lib/hooks/use-insumos';
+import { TIPO_INSUMO } from '@/lib/utils/constants';
 import type { CreateInsumoInput } from '@/lib/validations/insumo';
 import type { StockAdjustInput } from '@/lib/validations/insumo';
 
@@ -27,6 +28,13 @@ import { insumosColumns } from '@/components/tables/columns/insumos-columns';
 import { InsumoForm } from '@/components/forms/insumo-form';
 import { StockAdjustmentForm } from '@/components/forms/stock-adjustment-form';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 type InsumoRow = Insumo & { stockTotal: number };
 
@@ -37,13 +45,19 @@ export default function InsumosPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState('');
+  const [filterTipo, setFilterTipo] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [stockOpen, setStockOpen] = useState(false);
   const [selected, setSelected] = useState<InsumoRow | null>(null);
 
   // Data
-  const { data, isLoading } = useInsumos({ page, pageSize, search });
+  const { data, isLoading } = useInsumos({
+    page,
+    pageSize,
+    search,
+    tipoInsumo: filterTipo || undefined,
+  });
   const createMutation = useCreateInsumo();
   const updateMutation = useUpdateInsumo();
   const deleteMutation = useDeleteInsumo();
@@ -155,6 +169,18 @@ export default function InsumosPage() {
           Nuevo Insumo
         </Button>
       </PageHeader>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Select value={filterTipo} onValueChange={(v) => { setFilterTipo(v === '__all__' ? '' : v); setPage(1); }}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todos los tipos</SelectItem>
+            {TIPO_INSUMO.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
 
       <DataTable
         columns={columnsWithActions}

@@ -13,6 +13,8 @@ import {
   useUpdateEquipo,
   useDeleteEquipo,
 } from '@/lib/hooks/use-equipos';
+import { useEmpresas, useSitios } from '@/lib/hooks/use-catalogos';
+import { ESTADO_EQUIPO, TIPO_EQUIPO } from '@/lib/utils/constants';
 import type { CreateEquipoInput } from '@/lib/validations/equipo';
 
 import { PageHeader } from '@/components/shared/page-header';
@@ -22,6 +24,13 @@ import { FormDialog } from '@/components/shared/form-dialog';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { EquipoForm } from '@/components/forms/equipo-form';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { equiposColumns, type EquipoRow } from '@/components/tables/columns/equipos-columns';
 
 export default function EquiposPage() {
@@ -30,11 +39,28 @@ export default function EquiposPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [search, setSearch] = useState('');
+  const [filterEstado, setFilterEstado] = useState('');
+  const [filterTipo, setFilterTipo] = useState('');
+  const [filterEmpresa, setFilterEmpresa] = useState('');
+  const [filterSitio, setFilterSitio] = useState('');
+  const [filterObsoleto, setFilterObsoleto] = useState('');
   const [formOpen, setFormOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selected, setSelected] = useState<EquipoRow | null>(null);
 
-  const { data, isLoading } = useEquipos({ page, pageSize, search });
+  const { data: empresasData } = useEmpresas();
+  const { data: sitiosData } = useSitios();
+
+  const { data, isLoading } = useEquipos({
+    page,
+    pageSize,
+    search,
+    estado: filterEstado || undefined,
+    tipo: filterTipo || undefined,
+    empresaId: filterEmpresa || undefined,
+    sitioId: filterSitio || undefined,
+    obsoleto: filterObsoleto === 'true' ? true : filterObsoleto === 'false' ? false : undefined,
+  });
   const createMutation = useCreateEquipo();
   const updateMutation = useUpdateEquipo();
   const deleteMutation = useDeleteEquipo();
@@ -109,6 +135,59 @@ export default function EquiposPage() {
           <Plus className="size-4" /> Nuevo
         </Button>
       </PageHeader>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <Select value={filterEstado} onValueChange={(v) => { setFilterEstado(v === '__all__' ? '' : v); setPage(1); }}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Estado" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todos los estados</SelectItem>
+            {ESTADO_EQUIPO.map((e) => <SelectItem key={e} value={e}>{e}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <Select value={filterTipo} onValueChange={(v) => { setFilterTipo(v === '__all__' ? '' : v); setPage(1); }}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todos los tipos</SelectItem>
+            {TIPO_EQUIPO.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <Select value={filterEmpresa} onValueChange={(v) => { setFilterEmpresa(v === '__all__' ? '' : v); setPage(1); }}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Empresa" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todas las empresas</SelectItem>
+            {(empresasData ?? []).map((e) => <SelectItem key={e.id} value={e.id}>{e.nombre}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <Select value={filterSitio} onValueChange={(v) => { setFilterSitio(v === '__all__' ? '' : v); setPage(1); }}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Sitio" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todos los sitios</SelectItem>
+            {(sitiosData ?? []).map((s) => <SelectItem key={s.id} value={s.id}>{s.nombre}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <Select value={filterObsoleto} onValueChange={(v) => { setFilterObsoleto(v === '__all__' ? '' : v); setPage(1); }}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue placeholder="Obsoleto" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todos</SelectItem>
+            <SelectItem value="true">Si</SelectItem>
+            <SelectItem value="false">No</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       <DataTable
         columns={columnsWithActions}

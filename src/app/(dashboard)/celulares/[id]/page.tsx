@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -16,8 +16,10 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { FormDialog } from '@/components/shared/form-dialog';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { CelularForm } from '@/components/forms/celular-form';
 import { MovimientoForm } from '@/components/forms/movimiento-form';
-import { useCelular } from '@/lib/hooks/use-celulares';
+import { useCelular, useUpdateCelular, useDeleteCelular } from '@/lib/hooks/use-celulares';
 import { useCreateMovimiento } from '@/lib/hooks/use-movimientos';
 import { formatDate, formatDateTime } from '@/lib/utils/format';
 import type { CreateMovimientoInput } from '@/lib/validations/movimiento';
@@ -75,7 +77,11 @@ export default function CelularDetailPage() {
   const id = params.id as string;
   const { data, isLoading } = useCelular(id);
   const createMovimiento = useCreateMovimiento();
+  const updateMutation = useUpdateCelular();
+  const deleteMutation = useDeleteCelular();
   const [movFormOpen, setMovFormOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const celular = data as typeof data & { movimientos?: Movimiento[] };
 
@@ -106,6 +112,12 @@ export default function CelularDetailPage() {
           {celular.marca} {celular.modelo}
         </h1>
         <StatusBadge status={celular.estado || '-'} />
+        <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+          <Pencil className="size-4" /> Editar
+        </Button>
+        <Button variant="destructive" size="sm" onClick={() => setDeleteOpen(true)}>
+          <Trash2 className="size-4" /> Eliminar
+        </Button>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -269,6 +281,37 @@ export default function CelularDetailPage() {
           isLoading={createMovimiento.isPending}
         />
       </FormDialog>
+
+      <FormDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        title="Editar Celular"
+        description="Modifique los datos del celular."
+      >
+        <CelularForm
+          defaultValues={celular as unknown as Record<string, unknown>}
+          onSubmit={(formData: Record<string, unknown>) => {
+            updateMutation.mutate(
+              { id: celular.id, data: formData },
+              { onSuccess: () => setEditOpen(false) }
+            );
+          }}
+          isLoading={updateMutation.isPending}
+        />
+      </FormDialog>
+
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Eliminar Celular"
+        description={`¿Está seguro de que desea eliminar el celular ${celular.imei}? Esta acción no se puede deshacer.`}
+        onConfirm={() => {
+          deleteMutation.mutate(celular.id, {
+            onSuccess: () => router.push('/celulares'),
+          });
+        }}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }

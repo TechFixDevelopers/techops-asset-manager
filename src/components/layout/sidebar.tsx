@@ -1,7 +1,9 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTheme } from 'next-themes';
 import { signOut } from 'next-auth/react';
 import {
   LayoutDashboard,
@@ -12,7 +14,11 @@ import {
   Users,
   ArrowLeftRight,
   ClipboardList,
+  Phone,
+  Shield,
   LogOut,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -28,10 +34,15 @@ const navLinks = [
   { href: '/equipos', label: 'Equipos', icon: Monitor },
   { href: '/celulares', label: 'Celulares', icon: Smartphone },
   { href: '/monitores', label: 'Monitores', icon: MonitorSmartphone },
+  { href: '/lineas', label: 'Lineas', icon: Phone },
   { href: '/insumos', label: 'Insumos', icon: Package },
   { href: '/colaboradores', label: 'Colaboradores', icon: Users },
   { href: '/movimientos', label: 'Movimientos', icon: ArrowLeftRight },
   { href: '/cortes', label: 'Cortes de Stock', icon: ClipboardList },
+] as const;
+
+const adminLinks = [
+  { href: '/admin/usuarios', label: 'Usuarios', icon: Shield },
 ] as const;
 
 const perfilColors: Record<string, string> = {
@@ -42,22 +53,40 @@ const perfilColors: Record<string, string> = {
 
 export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   function isActive(href: string): boolean {
     if (href === '/') return pathname === '/';
     return pathname.startsWith(href);
   }
 
+  const allLinks = user.perfil === 'ADMIN'
+    ? [...navLinks, ...adminLinks]
+    : navLinks;
+
   return (
     <aside className="flex w-64 flex-col border-r border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
       {/* Header */}
-      <div className="flex h-16 items-center border-b border-gray-200 px-6 dark:border-gray-700">
+      <div className="flex h-16 items-center justify-between border-b border-gray-200 px-6 dark:border-gray-700">
         <h2 className="text-lg font-bold text-[#54A0D6]">TechOps</h2>
+        {mounted && (
+          <button
+            type="button"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+            title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+          >
+            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 px-3 py-4">
-        {navLinks.map(({ href, label, icon: Icon }) => {
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
+        {allLinks.map(({ href, label, icon: Icon }) => {
           const active = isActive(href);
           return (
             <Link
@@ -95,7 +124,7 @@ export function Sidebar({ user }: SidebarProps) {
             type="button"
             onClick={() => signOut({ callbackUrl: '/login' })}
             className="ml-2 rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
-            title="Cerrar sesión"
+            title="Cerrar sesion"
           >
             <LogOut className="h-4 w-4" />
           </button>
