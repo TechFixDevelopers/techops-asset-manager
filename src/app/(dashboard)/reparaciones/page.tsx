@@ -1,17 +1,16 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Plus } from 'lucide-react';
+import { Ticket } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { useReparaciones, useCreateReparacion } from '@/lib/hooks/use-reparaciones';
 import { TIPO_TAREA_REPARACION, ESTADO_REPARACION, ESTADO_COLORS } from '@/lib/utils/constants';
-import type { CreateReparacionInput } from '@/lib/validations/reparacion';
 import { formatDateTime } from '@/lib/utils/format';
 
 import { PageHeader } from '@/components/shared/page-header';
-import { FormDialog } from '@/components/shared/form-dialog';
-import { ReparacionForm } from '@/components/forms/reparacion-form';
 import { Button } from '@/components/ui/button';
+import { SnowTicketDialog, type SnowTicketGenerateData } from '@/components/servicenow/snow-ticket-dialog';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -28,7 +27,10 @@ export default function ReparacionesPage() {
   const [search, setSearch] = useState('');
   const [tipoFilter, setTipoFilter] = useState('');
   const [estadoFilter, setEstadoFilter] = useState('');
-  const [formOpen, setFormOpen] = useState(false);
+  const [snowOpen, setSnowOpen] = useState(false);
+  const [snowInitialData, setSnowInitialData] = useState<Record<string, string> | undefined>(undefined);
+  const [isFromRow, setIsFromRow] = useState(false);
+  const createReparacion = useCreateReparacion();
 
   const { data, isLoading } = useReparaciones({
     page,
@@ -38,17 +40,6 @@ export default function ReparacionesPage() {
     estado: estadoFilter || undefined,
   });
 
-  const createMutation = useCreateReparacion();
-
-  const handleCreate = useCallback(
-    (formData: CreateReparacionInput) => {
-      createMutation.mutate(formData, {
-        onSuccess: () => setFormOpen(false),
-      });
-    },
-    [createMutation],
-  );
-
   const rows = data?.data ?? [];
 
   return (
@@ -57,8 +48,8 @@ export default function ReparacionesPage() {
         title="Reparaciones"
         description="Gestiones de Field Support"
       >
-        <Button onClick={() => setFormOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Nueva Reparacion
+        <Button variant="outline" onClick={() => setSnowOpen(true)}>
+          <Ticket className="mr-2 h-4 w-4" /> Crear Ticket ServiceNow
         </Button>
       </PageHeader>
 
@@ -114,6 +105,7 @@ export default function ReparacionesPage() {
                 <th className="px-4 py-3 text-left font-medium">Estado</th>
                 <th className="px-4 py-3 text-left font-medium">Ticket</th>
                 <th className="px-4 py-3 text-left font-medium">Operador</th>
+                <th className="px-4 py-3 text-left font-medium">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y">
@@ -131,6 +123,32 @@ export default function ReparacionesPage() {
                   </td>
                   <td className="px-4 py-2">{r.ticketSnow || '-'}</td>
                   <td className="px-4 py-2">{r.operadorNombre || '-'}</td>
+                  <td className="px-4 py-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => {
+                        setSnowInitialData({
+                          tipoTarea: r.tipoTarea,
+                          tipoEquipo: r.tipoEquipo || '',
+                          equipoRef: r.equipoRef || '',
+                          descripcion: r.descripcion || '',
+                          reparacionesRealizadas: Array.isArray(r.reparacionesRealizadas) ? (r.reparacionesRealizadas as string[]).join(', ') : '',
+                          legajo: r.colaboradorLegajo || '',
+                          nombre: r.colaboradorNombre || '',
+                          sitioNombre: r.sitioNombre || '',
+                          sitioId: r.sitioId || '',
+                          colaboradorId: r.colaboradorId || '',
+                          shortDesc: `${r.tipoTarea} - ${r.equipoRef || 'Field Support'}`,
+                        });
+                        setIsFromRow(true);
+                        setSnowOpen(true);
+                      }}
+                    >
+                      <Ticket className="mr-1 h-3 w-3" /> Ticket
+                    </Button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -155,17 +173,35 @@ export default function ReparacionesPage() {
         </div>
       )}
 
-      <FormDialog
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        title="Nueva Reparacion"
-        description="Registre una gestion de Field Support"
-      >
-        <ReparacionForm
-          onSubmit={handleCreate}
-          isLoading={createMutation.isPending}
-        />
-      </FormDialog>
+      <SnowTicketDialog
+        open={snowOpen}
+        onOpenChange={(v) => {
+          setSnowOpen(v);
+          if (!v) {
+            setSnowInitialData(undefined);
+            setIsFromRow(false);
+          }
+        }}
+        initialTypeId={snowInitialData ? 'REPARACION' : undefined}
+        initialFormData={snowInitialData}
+        onGenerate={(data: SnowTicketGenerateData) => {
+          if (isFromRow) return;
+          const reparaciones = (data.formData.reparacionesRealizadas ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+          createReparacion.mutate({
+            tipoTarea: data.formData.tipoTarea || data.shortDesc,
+            tipoEquipo: data.formData.tipoEquipo || undefined,
+            reparacionesRealizadas: reparaciones,
+            descripcion: data.description,
+            colaboradorId: data.formData.colaboradorId || null,
+            equipoRef: data.formData.equipoSerial || data.formData.equipoRef || undefined,
+            sitioId: data.formData.sitioId || null,
+            estado: 'ABIERTA',
+          }, {
+            onSuccess: () => toast.success('Reparacion guardada correctamente'),
+            onError: () => toast.error('Error al guardar la reparacion'),
+          });
+        }}
+      />
     </div>
   );
 }

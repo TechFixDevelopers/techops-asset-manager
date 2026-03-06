@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -130,6 +131,7 @@ const SNOW_OPTIONS = {
 };
 
 const SHORT_DESC_PRESETS = [
+  'REPARACION DE EQUIPO',
   'ASIGNACION DE EQUIPO',
   'DEVOLUCION',
   'ROBO DE EQUIPO IT',
@@ -159,12 +161,22 @@ function saveSnowConfig(config: SnowConfig) {
 // Component
 // ============================================================
 
+export interface SnowTicketGenerateData {
+  typeId: string;
+  shortDesc: string;
+  description: string;
+  formData: Record<string, string>;
+}
+
 interface SnowTicketDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialTypeId?: string;
+  initialFormData?: Record<string, string>;
+  onGenerate?: (data: SnowTicketGenerateData) => void;
 }
 
-export function SnowTicketDialog({ open, onOpenChange }: SnowTicketDialogProps) {
+export function SnowTicketDialog({ open, onOpenChange, initialTypeId, initialFormData, onGenerate }: SnowTicketDialogProps) {
   const [selectedType, setSelectedType] = useState<SnowGestionType | null>(null);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [snowConfig, setSnowConfig] = useState<SnowConfig>(SNOW_DEFAULTS);
@@ -178,6 +190,19 @@ export function SnowTicketDialog({ open, onOpenChange }: SnowTicketDialogProps) 
     setSnowConfig(loadSnowConfig());
   }, []);
 
+  // Pre-fill when initialTypeId/initialFormData change (e.g. from reparaciones row)
+  useEffect(() => {
+    if (open && initialTypeId) {
+      const t = SNOW_GESTION_TEMPLATES.find((g) => g.id === initialTypeId);
+      if (t) {
+        setSelectedType(t);
+        setFormData(initialFormData ?? {});
+        setShortDesc(initialFormData?.shortDesc || t.shortDesc);
+        setGenerated(false);
+      }
+    }
+  }, [open, initialTypeId, initialFormData]);
+
   // Data hooks
   const { data: colaboradoresData } = useColaboradores({ pageSize: 500 });
   const { data: equiposData } = useEquipos({ pageSize: 500 });
@@ -188,6 +213,27 @@ export function SnowTicketDialog({ open, onOpenChange }: SnowTicketDialogProps) 
   const equipos = equiposData?.data ?? [];
   const celularesList = celularesData?.data ?? [];
   const sitios = sitiosData ?? [];
+
+  // Auto-match equipo from DB when pre-filling from reparacion row
+  useEffect(() => {
+    if (open && initialFormData?.equipoRef && !formData.equipoId && equipos.length > 0) {
+      const ref = initialFormData.equipoRef.toLowerCase();
+      const match = equipos.find((e) =>
+        e.serialNumber?.toLowerCase() === ref ||
+        ref.includes(e.serialNumber?.toLowerCase() ?? '___')
+      );
+      if (match) {
+        setFormData((prev) => ({
+          ...prev,
+          equipoId: match.id,
+          equipoMarca: match.marca,
+          equipoModelo: match.modelo,
+          equipoSerial: match.serialNumber,
+        }));
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, equipos.length]);
 
   const reset = useCallback(() => {
     setSelectedType(null);
@@ -300,6 +346,12 @@ export function SnowTicketDialog({ open, onOpenChange }: SnowTicketDialogProps) 
 
     const ok = await copyToClipboard(clipText);
     if (ok) {
+      onGenerate?.({
+        typeId: selectedType.id,
+        shortDesc: shortDesc || selectedType.shortDesc,
+        description: descriptionText,
+        formData,
+      });
       toast.warning(
         'Datos copiados al portapapeles. En ServiceNow, haga clic en el favorito "AUTO-FILL SAZ".',
         { duration: 8000 },
@@ -335,7 +387,7 @@ export function SnowTicketDialog({ open, onOpenChange }: SnowTicketDialogProps) 
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Seleccionar tipo de gestion..." />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent position="popper">
                 {SNOW_GESTION_TEMPLATES.map((t) => (
                   <SelectItem key={t.id} value={t.id}>
                     {t.label}
@@ -374,7 +426,7 @@ export function SnowTicketDialog({ open, onOpenChange }: SnowTicketDialogProps) 
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="Seleccionar equipo..." />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent position="popper">
                             {equipos.map((e) => (
                               <SelectItem key={e.id} value={e.id}>
                                 {e.serialNumber} - {e.marca} {e.modelo}
@@ -398,7 +450,7 @@ export function SnowTicketDialog({ open, onOpenChange }: SnowTicketDialogProps) 
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="Seleccionar celular..." />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent position="popper">
                             {celularesList.map((c) => (
                               <SelectItem key={c.id} value={c.id}>
                                 {c.imei} - {c.marca} {c.modelo}
@@ -422,7 +474,7 @@ export function SnowTicketDialog({ open, onOpenChange }: SnowTicketDialogProps) 
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="Seleccionar sitio..." />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent position="popper">
                             {sitios.map((s) => (
                               <SelectItem key={s.id} value={s.id}>{s.nombre}</SelectItem>
                             ))}
@@ -439,12 +491,44 @@ export function SnowTicketDialog({ open, onOpenChange }: SnowTicketDialogProps) 
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder={`Seleccionar ${field.label.toLowerCase()}...`} />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent position="popper">
                             {field.options?.map((opt) => (
                               <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
+                      </div>
+                    );
+                  }
+                  if (field.type === 'checkboxes' && field.options) {
+                    const selected = (formData[field.key] ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+                    const toggleItem = (item: string) => {
+                      const next = selected.includes(item)
+                        ? selected.filter((s) => s !== item)
+                        : [...selected, item];
+                      setField(field.key, next.join(', '));
+                    };
+                    return (
+                      <div key={field.key} className="space-y-2">
+                        <Label>{field.label} {field.required && <span className="text-destructive">*</span>}</Label>
+                        <div className="rounded-md border p-3">
+                          <div className="grid gap-2 sm:grid-cols-3">
+                            {field.options.map((item) => (
+                              <label key={item} className="flex items-center gap-2 text-sm cursor-pointer">
+                                <Checkbox
+                                  checked={selected.includes(item)}
+                                  onCheckedChange={() => toggleItem(item)}
+                                />
+                                {item}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                        {selected.length > 0 && (
+                          <p className="text-xs text-muted-foreground">
+                            Seleccionados: {selected.join(', ')}
+                          </p>
+                        )}
                       </div>
                     );
                   }
@@ -468,7 +552,7 @@ export function SnowTicketDialog({ open, onOpenChange }: SnowTicketDialogProps) 
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Presets..." />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent position="popper">
                     {SHORT_DESC_PRESETS.map((p) => (
                       <SelectItem key={p} value={p}>{p}</SelectItem>
                     ))}
@@ -502,7 +586,7 @@ export function SnowTicketDialog({ open, onOpenChange }: SnowTicketDialogProps) 
                         <Label className="text-[11px] font-medium text-muted-foreground">Canal</Label>
                         <Select value={snowConfig.canal} onValueChange={(v) => updateSnowConfig('canal', v)}>
                           <SelectTrigger className="h-9 text-xs w-full"><SelectValue /></SelectTrigger>
-                          <SelectContent>
+                          <SelectContent position="popper">
                             {SNOW_OPTIONS.canal.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                           </SelectContent>
                         </Select>
@@ -511,7 +595,7 @@ export function SnowTicketDialog({ open, onOpenChange }: SnowTicketDialogProps) 
                         <Label className="text-[11px] font-medium text-muted-foreground">Service Classification</Label>
                         <Select value={snowConfig.serviceClass} onValueChange={(v) => updateSnowConfig('serviceClass', v)}>
                           <SelectTrigger className="h-9 text-xs w-full truncate"><SelectValue /></SelectTrigger>
-                          <SelectContent>
+                          <SelectContent position="popper">
                             {SNOW_OPTIONS.serviceClass.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                           </SelectContent>
                         </Select>
@@ -522,7 +606,7 @@ export function SnowTicketDialog({ open, onOpenChange }: SnowTicketDialogProps) 
                       <Label className="text-[11px] font-medium text-muted-foreground">Servicio</Label>
                       <Select value={snowConfig.servicio} onValueChange={(v) => updateSnowConfig('servicio', v)}>
                         <SelectTrigger className="h-9 text-xs w-full truncate"><SelectValue /></SelectTrigger>
-                        <SelectContent>
+                        <SelectContent position="popper">
                           {SNOW_OPTIONS.servicio.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                         </SelectContent>
                       </Select>
@@ -533,7 +617,7 @@ export function SnowTicketDialog({ open, onOpenChange }: SnowTicketDialogProps) 
                         <Label className="text-[11px] font-medium text-muted-foreground">Symptom</Label>
                         <Select value={snowConfig.symptom} onValueChange={(v) => updateSnowConfig('symptom', v)}>
                           <SelectTrigger className="h-9 text-xs w-full truncate"><SelectValue /></SelectTrigger>
-                          <SelectContent>
+                          <SelectContent position="popper">
                             {SNOW_OPTIONS.symptom.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                           </SelectContent>
                         </Select>
@@ -542,7 +626,7 @@ export function SnowTicketDialog({ open, onOpenChange }: SnowTicketDialogProps) 
                         <Label className="text-[11px] font-medium text-muted-foreground">Zone</Label>
                         <Select value={snowConfig.zone} onValueChange={(v) => updateSnowConfig('zone', v)}>
                           <SelectTrigger className="h-9 text-xs w-full"><SelectValue /></SelectTrigger>
-                          <SelectContent>
+                          <SelectContent position="popper">
                             {SNOW_OPTIONS.zone.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                           </SelectContent>
                         </Select>
@@ -553,7 +637,7 @@ export function SnowTicketDialog({ open, onOpenChange }: SnowTicketDialogProps) 
                       <Label className="text-[11px] font-medium text-muted-foreground">Grupo de Asignacion</Label>
                       <Select value={snowConfig.assignmentGroup} onValueChange={(v) => updateSnowConfig('assignmentGroup', v)}>
                         <SelectTrigger className="h-9 text-xs w-full truncate"><SelectValue /></SelectTrigger>
-                        <SelectContent>
+                        <SelectContent position="popper">
                           {SNOW_OPTIONS.assignmentGroup.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
                         </SelectContent>
                       </Select>
@@ -563,7 +647,7 @@ export function SnowTicketDialog({ open, onOpenChange }: SnowTicketDialogProps) 
                       <Label className="text-[11px] font-medium text-muted-foreground">Impacto</Label>
                       <Select value={snowConfig.impact} onValueChange={(v) => updateSnowConfig('impact', v)}>
                         <SelectTrigger className="h-9 text-xs w-full"><SelectValue /></SelectTrigger>
-                        <SelectContent>
+                        <SelectContent position="popper">
                           {SNOW_OPTIONS.impact.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
                         </SelectContent>
                       </Select>

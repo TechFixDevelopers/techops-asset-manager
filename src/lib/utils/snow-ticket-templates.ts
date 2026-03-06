@@ -1,12 +1,12 @@
 // ============================================================
-// ServiceNow Ticket Templates for Movimientos
+// ServiceNow Ticket Templates for Movimientos y Reparaciones
 // Based on "Procesos TECH 2025 v1.1" document
 // ============================================================
 
 export interface SnowGestionField {
   key: string;
   label: string;
-  type: 'colaborador' | 'equipo' | 'celular' | 'insumo' | 'sitio' | 'text' | 'select' | 'checkbox';
+  type: 'colaborador' | 'equipo' | 'celular' | 'insumo' | 'sitio' | 'text' | 'select' | 'checkbox' | 'checkboxes';
   options?: string[];
   required?: boolean;
 }
@@ -193,6 +193,52 @@ export const SNOW_GESTION_TEMPLATES: SnowGestionType[] = [
       `  - Modelo: ${d.celularModelo || ''}`,
       `  - IMEI: ${d.celularImei || ''}`,
       `  - Linea: ${d.celularLinea || ''}`,
+      `* Sitio: ${d.sitioNombre || ''}`,
+    ].join('\n'),
+  },
+  // --- REPARACIONES (Field Support) ---
+  {
+    id: 'REPARACION',
+    label: 'Reparacion / Field Support',
+    shortDesc: 'REPARACION FIELD SUPPORT',
+    fields: [
+      { key: 'colaborador', label: 'Colaborador', type: 'colaborador', required: true },
+      { key: 'equipo', label: 'Equipo', type: 'equipo', required: true },
+      { key: 'tipoTarea', label: 'Tipo de Tarea', type: 'select', options: [
+        'Problemas con Impresoras y Scanners',
+        'Problemas con Notebook, TC o Desktop',
+        'Periféricos rotos (mouse, teclado, adaptadores)',
+        'Problemas con Monitores, TVs, Proyectores',
+        'Problema con Sala Zoom',
+        'Problemas con Software y Aplicaciones',
+        'Problemas de Conectividad',
+        'Problemas con Usuario Windows y accesos',
+      ], required: true },
+      { key: 'tipoEquipo', label: 'Tipo de Equipo', type: 'select', options: ['Notebook', 'Desktop', 'Smartphone', 'Monitor'] },
+      { key: 'reparacionesRealizadas', label: 'Fallas / Reparaciones Realizadas', type: 'checkboxes', options: [
+        'Audio', 'Batería', 'Bloqueo Bitlocker', 'Cámara',
+        'Configuración de teclado', 'Fecha/Hora', 'Idioma',
+        'Lector biométrico', 'Mapeo carpeta de red', 'Micrófono',
+        'Navegador de internet', 'No enciende', 'Panel táctil',
+        'Pantalla', 'PIN', 'Red/Wifi', 'Software',
+        'Fuente de Alimentación',
+      ] },
+      { key: 'descripcion', label: 'Descripcion adicional', type: 'text' },
+      { key: 'sitio', label: 'Sitio', type: 'sitio', required: true },
+    ],
+    buildDescription: (d) => [
+      `REPARACION FIELD SUPPORT - ${d.tipoTarea || ''}`,
+      '',
+      `* Legajo: ${d.legajo || ''}`,
+      `* Apellido y Nombre: ${d.nombre || ''}`,
+      `* Tipo de Tarea: ${d.tipoTarea || ''}`,
+      `* Tipo de Equipo: ${d.tipoEquipo || ''}`,
+      '* Equipo:',
+      `  - Marca: ${d.equipoMarca || ''}`,
+      `  - Modelo: ${d.equipoModelo || ''}`,
+      `  - Serie: ${d.equipoSerial || ''}`,
+      `* Fallas / Reparaciones: ${d.reparacionesRealizadas || ''}`,
+      `* Descripcion: ${d.descripcion || ''}`,
       `* Sitio: ${d.sitioNombre || ''}`,
     ].join('\n'),
   },

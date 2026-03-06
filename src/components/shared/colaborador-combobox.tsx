@@ -25,7 +25,7 @@ export function ColaboradorCombobox({ value, onValueChange, placeholder = 'Selec
   const selected = items.find((c) => c.id === value);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
