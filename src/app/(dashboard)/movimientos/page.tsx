@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Ticket } from 'lucide-react';
 
 import { useMovimientos, useCreateMovimiento } from '@/lib/hooks/use-movimientos';
 import type { CreateMovimientoInput } from '@/lib/validations/movimiento';
@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { movimientosColumns } from '@/components/tables/columns/movimientos-columns';
+import { SnowTicketDialog } from '@/components/servicenow/snow-ticket-dialog';
 
 export default function MovimientosPage() {
   const [page, setPage] = useState(1);
@@ -35,6 +36,7 @@ export default function MovimientosPage() {
   const [desde, setDesde] = useState('');
   const [hasta, setHasta] = useState('');
   const [formOpen, setFormOpen] = useState(false);
+  const [snowOpen, setSnowOpen] = useState(false);
 
   const { data, isLoading } = useMovimientos({
     page,
@@ -64,9 +66,14 @@ export default function MovimientosPage() {
         title="Movimientos"
         description="Registro de movimientos de inventario"
       >
-        <Button onClick={() => setFormOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Nuevo Movimiento
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setSnowOpen(true)}>
+            <Ticket className="mr-2 h-4 w-4" /> Crear Ticket ServiceNow
+          </Button>
+          <Button onClick={() => setFormOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Nuevo Movimiento
+          </Button>
+        </div>
       </PageHeader>
 
       {/* Filter bar */}
@@ -182,6 +189,8 @@ export default function MovimientosPage() {
           isLoading={createMutation.isPending}
         />
       </FormDialog>
+
+      <SnowTicketDialog open={snowOpen} onOpenChange={setSnowOpen} />
     </div>
   );
 }

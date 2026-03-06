@@ -73,6 +73,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           email: user.email,
           perfil: user.perfil,
           username: user.username,
+          permisos: user.permisos as { modulosHabilitados?: string[] } | null,
         };
       },
     }),
@@ -91,6 +92,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id!;
         token.perfil = (user as { perfil: string }).perfil;
         token.username = (user as { username: string }).username;
+        token.permisos = (user as { permisos?: { modulosHabilitados?: string[] } | null }).permisos ?? null;
       }
       return token;
     },
@@ -99,6 +101,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.id = token.id as string;
         session.user.perfil = token.perfil as string;
         session.user.username = token.username as string;
+        session.user.permisos = token.permisos ?? null;
       }
       return session;
     },

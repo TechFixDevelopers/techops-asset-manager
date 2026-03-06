@@ -17,7 +17,6 @@ import { TIPO_INSUMO } from '@/lib/utils/constants';
 import type { CreateInsumoInput } from '@/lib/validations/insumo';
 import type { StockAdjustInput } from '@/lib/validations/insumo';
 
-import { exportToExcel } from '@/lib/utils/excel-export';
 import { ExportButton } from '@/components/shared/export-button';
 import { PageHeader } from '@/components/shared/page-header';
 import { FormDialog } from '@/components/shared/form-dialog';
@@ -195,15 +194,8 @@ export default function InsumosPage() {
         isLoading={isLoading}
         toolbarActions={
           <ExportButton
-            onExport={() => {
-              const rows = (data?.data ?? []).map((i) => [
-                i.nombre, i.tipoInsumo, i.serialInsumo || '', i.stockTotal, i.cantidadMin ?? '',
-              ]);
-              exportToExcel({
-                filename: 'insumos',
-                sheets: [{ name: 'Insumos', headers: ['Nombre', 'Tipo', 'Serial', 'Stock Total', 'Min.'], rows }],
-              });
-            }}
+            exportUrl="/api/export/insumos"
+            exportFilename="Inventario Insumos AR.xlsx"
           />
         }
       />

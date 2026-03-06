@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Session } from 'next-auth';
 import { ZodType } from 'zod';
-import { requirePermission, Action, Resource } from './permissions';
+import { requirePermission, canAccessModule, Action, Resource } from './permissions';
 import { validateCsrf } from '@/lib/middleware/csrf';
 import { rateLimit } from '@/lib/middleware/rate-limit';
 
@@ -43,6 +43,12 @@ export function withAuth<T = unknown>(
 
       // 3. Auth + permissions
       const session = await requirePermission(action, resource);
+
+      // 3b. Module access check (per-user module configuration)
+      const permisos = session.user.permisos as { modulosHabilitados?: string[] } | null | undefined;
+      if (!canAccessModule(session.user.perfil, resource, permisos)) {
+        return NextResponse.json({ error: 'Módulo no habilitado' }, { status: 403 });
+      }
 
       // 4. Body parsing + Zod validation (if schema provided)
       let body: T | undefined;

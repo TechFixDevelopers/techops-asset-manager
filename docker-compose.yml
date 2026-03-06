@@ -1,0 +1,56 @@
+# ============================================================
+# TechOps Asset Manager - Docker Compose
+# ============================================================
+# Despliegue completo: PostgreSQL + App en un solo comando
+#
+# Uso:
+#   1. Copiar .env.local.example a .env.local y configurar
+#   2. docker-compose up -d
+#   3. docker-compose exec app npx drizzle-kit push
+#   4. docker-compose exec app npx tsx scripts/seed.ts
+#   5. Acceder a http://localhost:3000
+# ============================================================
+
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: techops-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: techops_assets
+      POSTGRES_USER: techops
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-techops_secure_2025}
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U techops -d techops_assets']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: techops-app
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_URL: postgresql://techops:${DB_PASSWORD:-techops_secure_2025}@db:5432/techops_assets
+      AUTH_SECRET: ${AUTH_SECRET:-cambiar-este-secreto-en-produccion-abc123}
+      AUTH_URL: ${AUTH_URL:-http://localhost:3000}
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+    driver: local

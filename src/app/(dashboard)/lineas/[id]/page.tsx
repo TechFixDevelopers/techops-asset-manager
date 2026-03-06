@@ -20,6 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
@@ -140,6 +141,57 @@ export default function LineaDetailPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Celulares vinculados */}
+      {linea.celulares && linea.celulares.length > 0 && (
+        <Tabs defaultValue="celulares">
+          <TabsList>
+            <TabsTrigger value="celulares">
+              Celulares Asignados ({linea.celulares.length})
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="celulares">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b text-left text-muted-foreground">
+                        <th className="pb-2 pr-4">IMEI</th>
+                        <th className="pb-2 pr-4">Tipo</th>
+                        <th className="pb-2 pr-4">Marca</th>
+                        <th className="pb-2 pr-4">Modelo</th>
+                        <th className="pb-2 pr-4">Estado</th>
+                        <th className="pb-2 pr-4">Colaborador</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {linea.celulares.map((cel: Record<string, unknown>) => (
+                        <tr
+                          key={cel.id as string}
+                          className="cursor-pointer border-b hover:bg-muted/50"
+                          onClick={() => router.push(`/celulares/${cel.id}`)}
+                        >
+                          <td className="py-2 pr-4 font-mono">{cel.imei as string}</td>
+                          <td className="py-2 pr-4">{cel.tipo as string}</td>
+                          <td className="py-2 pr-4">{cel.marca as string}</td>
+                          <td className="py-2 pr-4">{cel.modelo as string}</td>
+                          <td className="py-2 pr-4">
+                            <StatusBadge status={(cel.estado as string) ?? 'STOCK'} />
+                          </td>
+                          <td className="py-2 pr-4">
+                            {(cel.colaborador as Record<string, unknown>)?.nombre as string ?? '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      )}
 
       <FormDialog
         open={editOpen}

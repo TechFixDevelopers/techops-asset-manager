@@ -1,12 +1,24 @@
 import { db } from '@/lib/db';
 import { equipos, celulares, insumos, insumoStock, movimientos } from '@/lib/db/schema';
-import { eq, isNull, count, sql, gte } from 'drizzle-orm';
+import { eq, isNull, count, sql, gte, desc } from 'drizzle-orm';
 import type { DashboardStats } from '@/lib/types/database';
 
 export interface ChartData {
   equiposByEstado: { estado: string; count: number }[];
   celularesByEstado: { estado: string; count: number }[];
   movimientosPorDia: { fecha: string; count: number }[];
+}
+
+export interface RecentActivityItem {
+  id: string;
+  tipo: string;
+  colaboradorNombre: string | null;
+  operadorNombre: string | null;
+  serialRef: string | null;
+  imeiRef: string | null;
+  sitioNombre: string | null;
+  comentarios: string | null;
+  createdAt: Date | null;
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
@@ -111,4 +123,38 @@ export async function getChartData(): Promise<ChartData> {
     celularesByEstado: celularesByEstado.map(r => ({ estado: r.estado, count: r.count })),
     movimientosPorDia: movimientosPorDia.map(r => ({ fecha: r.fecha, count: r.count })),
   };
+}
+
+export async function getRecentActivity(): Promise<RecentActivityItem[]> {
+  const rows = await db.query.movimientos.findMany({
+    orderBy: [desc(movimientos.createdAt)],
+    limit: 10,
+    columns: {
+      id: true,
+      tipo: true,
+      serialRef: true,
+      imeiRef: true,
+      comentarios: true,
+      createdAt: true,
+    },
+    with: {
+      colaborador: { columns: { nombre: true } },
+      operador: { columns: { nombre: true } },
+      equipo: { columns: { serialNumber: true } },
+      celular: { columns: { imei: true } },
+      sitio: { columns: { nombre: true } },
+    },
+  });
+
+  return rows.map((row) => ({
+    id: row.id,
+    tipo: row.tipo,
+    colaboradorNombre: row.colaborador?.nombre ?? null,
+    operadorNombre: row.operador?.nombre ?? null,
+    serialRef: row.serialRef ?? row.equipo?.serialNumber ?? null,
+    imeiRef: row.imeiRef ?? row.celular?.imei ?? null,
+    sitioNombre: row.sitio?.nombre ?? null,
+    comentarios: row.comentarios,
+    createdAt: row.createdAt,
+  }));
 }

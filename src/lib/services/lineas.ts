@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
-import { lineas, sitios } from '@/lib/db/schema';
-import { eq, and, ilike, or, desc, count } from 'drizzle-orm';
+import { lineas, sitios, celulares } from '@/lib/db/schema';
+import { eq, and, ilike, or, desc, count, isNull } from 'drizzle-orm';
 import type { PaginatedResponse, Linea } from '@/lib/types/database';
 
 export interface LineaSearchParams {
@@ -11,16 +11,18 @@ export interface LineaSearchParams {
   sortOrder?: 'asc' | 'desc';
   proveedor?: string;
   estado?: string;
+  tipoLinea?: string;
   sitioId?: string;
 }
 
 export async function listLineas(params: LineaSearchParams): Promise<PaginatedResponse<Linea & { sitio: { nombre: string } | null }>> {
-  const { page = 1, pageSize = 25, search, proveedor, estado, sitioId } = params;
+  const { page = 1, pageSize = 25, search, proveedor, estado, tipoLinea, sitioId } = params;
   const offset = (page - 1) * pageSize;
 
   const conditions = [];
   if (proveedor) conditions.push(eq(lineas.proveedor, proveedor));
   if (estado) conditions.push(eq(lineas.estado, estado));
+  if (tipoLinea) conditions.push(eq(lineas.tipoLinea, tipoLinea));
   if (sitioId) conditions.push(eq(lineas.sitioId, sitioId));
   if (search) {
     conditions.push(
@@ -74,6 +76,12 @@ export async function getLineaById(id: string) {
     where: eq(lineas.id, id),
     with: {
       sitio: true,
+      celulares: {
+        where: isNull(celulares.deletedAt),
+        with: {
+          colaborador: true,
+        },
+      },
     },
   }) ?? null;
 }

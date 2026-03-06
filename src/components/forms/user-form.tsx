@@ -3,7 +3,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { PERFIL_USUARIO } from '@/lib/utils/constants';
+import { useState } from 'react';
+import { PERFIL_USUARIO, MODULOS_CONFIGURABLES } from '@/lib/utils/constants';
 import {
   Form,
   FormControl,
@@ -41,13 +42,19 @@ type UserFormValues = z.infer<ReturnType<typeof buildSchema>>;
 
 interface UserFormProps {
   defaultValues?: Record<string, unknown>;
-  onSubmit: (data: UserFormValues) => void;
+  onSubmit: (data: Record<string, unknown>) => void;
   isLoading?: boolean;
   isEditing?: boolean;
 }
 
 export function UserForm({ defaultValues, onSubmit, isLoading, isEditing = false }: UserFormProps) {
   const schema = buildSchema(isEditing);
+
+  // Extract initial modulosHabilitados from defaultValues.permisos
+  const initialPermisos = defaultValues?.permisos as { modulosHabilitados?: string[] } | undefined;
+  const [modulosHabilitados, setModulosHabilitados] = useState<string[]>(
+    initialPermisos?.modulosHabilitados ?? [],
+  );
 
   const form = useForm<UserFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -65,14 +72,33 @@ export function UserForm({ defaultValues, onSubmit, isLoading, isEditing = false
     },
   });
 
+  const watchPerfil = form.watch('perfil');
+
+  const toggleModulo = (moduleId: string) => {
+    setModulosHabilitados((prev) =>
+      prev.includes(moduleId)
+        ? prev.filter((m) => m !== moduleId)
+        : [...prev, moduleId],
+    );
+  };
+
   const handleSubmit = (data: UserFormValues) => {
+    // Build final payload with permisos
+    const payload: Record<string, unknown> = { ...data };
+
+    // Include permisos only for non-ADMIN users
+    if (data.perfil !== 'ADMIN') {
+      payload.permisos = { modulosHabilitados };
+    } else {
+      payload.permisos = {};
+    }
+
     // If editing and password is empty, remove it from payload
     if (isEditing && (!data.password || data.password === '')) {
-      const { password: _, ...rest } = data;
-      onSubmit(rest as UserFormValues);
-    } else {
-      onSubmit(data);
+      delete payload.password;
     }
+
+    onSubmit(payload);
   };
 
   return (
@@ -177,6 +203,32 @@ export function UserForm({ defaultValues, onSubmit, isLoading, isEditing = false
             )}
           />
         </div>
+
+        {/* Module access configuration — hidden for ADMIN (always has full access) */}
+        {watchPerfil !== 'ADMIN' && (
+          <div className="space-y-3 rounded-md border p-4">
+            <div>
+              <h4 className="text-sm font-medium">Modulos Habilitados</h4>
+              <p className="text-xs text-muted-foreground">
+                Si no se selecciona ninguno, el usuario tendra acceso a todos los modulos.
+              </p>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-3">
+              {MODULOS_CONFIGURABLES.map(({ id, label }) => (
+                <label
+                  key={id}
+                  className="flex items-center gap-2 text-sm"
+                >
+                  <Checkbox
+                    checked={modulosHabilitados.includes(id)}
+                    onCheckedChange={() => toggleModulo(id)}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={isLoading}>

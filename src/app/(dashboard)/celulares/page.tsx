@@ -12,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { exportToExcel } from '@/lib/utils/excel-export';
 import { ExportButton } from '@/components/shared/export-button';
 import { PageHeader } from '@/components/shared/page-header';
 import { FormDialog } from '@/components/shared/form-dialog';
@@ -179,16 +178,8 @@ export default function CelularesPage() {
         isLoading={isLoading}
         toolbarActions={
           <ExportButton
-            onExport={() => {
-              const rows = (data?.data ?? []).map((c) => [
-                c.imei, c.tipo, c.marca, c.modelo, c.estado,
-                c.colaborador?.nombre || '', c.linea?.numero || '', c.sitio?.nombre || '',
-              ]);
-              exportToExcel({
-                filename: 'celulares',
-                sheets: [{ name: 'Celulares', headers: ['IMEI', 'Tipo', 'Marca', 'Modelo', 'Estado', 'Colaborador', 'Linea', 'Sitio'], rows }],
-              });
-            }}
+            exportUrl="/api/export/celulares"
+            exportFilename="Inventario CELULARES AR.xlsx"
           />
         }
       />

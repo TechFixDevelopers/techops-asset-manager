@@ -53,3 +53,36 @@ export async function apiFetch<T>(
 
   return response.json() as Promise<T>;
 }
+
+/**
+ * Download a file from an API route (e.g. template-based Excel export).
+ * Fetches the binary response and triggers a browser download.
+ */
+export async function apiDownload(url: string, fallbackFilename: string): Promise<void> {
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    let msg = `Export failed (${response.status})`;
+    try {
+      const err = await response.json();
+      if (err?.error) msg = err.error;
+    } catch { /* not JSON */ }
+    throw new Error(msg);
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get('Content-Disposition');
+  let filename = fallbackFilename;
+  if (disposition) {
+    const match = disposition.match(/filename="?([^"]+)"?/);
+    if (match) filename = match[1];
+  }
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}

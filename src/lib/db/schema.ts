@@ -342,6 +342,86 @@ export const cortesStock = pgTable(
 );
 
 // ============================================================
+// WIKI PAGES (Intranet)
+// ============================================================
+
+export const wikiPages = pgTable(
+  'wiki_pages',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    titulo: text('titulo').notNull(),
+    slug: text('slug').notNull().unique(),
+    contenido: text('contenido').notNull(),
+    categoria: text('categoria').notNull(),
+    orden: integer('orden').default(0),
+    activo: boolean('activo').default(true),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('idx_wiki_slug').on(table.slug),
+    index('idx_wiki_categoria').on(table.categoria),
+    index('idx_wiki_orden').on(table.orden),
+  ],
+);
+
+// ============================================================
+// LINKS UTILES
+// ============================================================
+
+export const linksUtiles = pgTable(
+  'links_utiles',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    titulo: text('titulo').notNull(),
+    url: text('url').notNull(),
+    descripcion: text('descripcion'),
+    categoria: text('categoria').notNull(),
+    orden: integer('orden').default(0),
+    activo: boolean('activo').default(true),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('idx_links_categoria').on(table.categoria),
+    index('idx_links_orden').on(table.orden),
+  ],
+);
+
+// ============================================================
+// REPARACIONES (Field Support)
+// ============================================================
+
+export const reparaciones = pgTable(
+  'reparaciones',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tipoTarea: text('tipo_tarea').notNull(),
+    tipoEquipo: text('tipo_equipo'),
+    reparacionesRealizadas: jsonb('reparaciones_realizadas').default([]),
+    descripcion: text('descripcion'),
+    colaboradorId: uuid('colaborador_id').references(() => colaboradores.id),
+    equipoRef: text('equipo_ref'),
+    sitioId: uuid('sitio_id').references(() => sitios.id),
+    ticketSnow: text('ticket_snow'),
+    estado: text('estado').notNull().default('ABIERTA'),
+    operadorId: uuid('operador_id')
+      .notNull()
+      .references(() => appUsers.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('idx_reparaciones_tipo').on(table.tipoTarea),
+    index('idx_reparaciones_estado').on(table.estado),
+    index('idx_reparaciones_colaborador').on(table.colaboradorId),
+    index('idx_reparaciones_sitio').on(table.sitioId),
+    index('idx_reparaciones_operador').on(table.operadorId),
+    index('idx_reparaciones_fecha').on(table.createdAt),
+  ],
+);
+
+// ============================================================
 // SERVICENOW TICKETS
 // ============================================================
 
@@ -380,6 +460,7 @@ export const sitiosRelations = relations(sitios, ({ one, many }) => ({
 export const appUsersRelations = relations(appUsers, ({ many }) => ({
   movimientos: many(movimientos),
   cortesStock: many(cortesStock),
+  reparaciones: many(reparaciones),
 }));
 
 export const colaboradoresRelations = relations(colaboradores, ({ one, many }) => ({
@@ -443,4 +524,11 @@ export const cortesStockRelations = relations(cortesStock, ({ one }) => ({
 
 export const ticketsSnowRelations = relations(ticketsSnow, ({ one }) => ({
   movimiento: one(movimientos, { fields: [ticketsSnow.movimientoId], references: [movimientos.id] }),
+}));
+
+// --- REPARACIONES relations ---
+export const reparacionesRelations = relations(reparaciones, ({ one }) => ({
+  colaborador: one(colaboradores, { fields: [reparaciones.colaboradorId], references: [colaboradores.id] }),
+  sitio: one(sitios, { fields: [reparaciones.sitioId], references: [sitios.id] }),
+  operador: one(appUsers, { fields: [reparaciones.operadorId], references: [appUsers.id] }),
 }));

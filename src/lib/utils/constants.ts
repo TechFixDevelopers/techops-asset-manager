@@ -135,6 +135,88 @@ export const ESTADO_DEVOLUCION = [
 // --- PERFILES ---
 export const PERFIL_USUARIO = ['SAZ', 'LAS', 'ADMIN'] as const;
 
+// --- REPARACIONES (Field Support) ---
+export const TIPO_TAREA_REPARACION = [
+  'Problemas con Impresoras y Scanners',
+  'Problemas con Notebook, TC o Desktop',
+  'Periféricos rotos (mouse, teclado, adaptadores)',
+  'Problemas con Monitores, TVs, Proyectores',
+  'Problema con Sala Zoom',
+  'Problemas con Software y Aplicaciones',
+  'Problemas de Conectividad',
+  'Problemas con Usuario Windows y accesos',
+] as const;
+
+export const TIPO_EQUIPO_REPARACION = [
+  'Notebook', 'Desktop', 'Smartphone', 'Monitor',
+] as const;
+
+export const REPARACIONES_CHECKBOXES = [
+  'Audio', 'Batería', 'Bloqueo Bitlocker', 'Cámara',
+  'Configuración de teclado', 'Fecha/Hora', 'Idioma',
+  'Lector biométrico', 'Mapeo carpeta de red', 'Micrófono',
+  'Navegador de internet', 'No enciende', 'Panel táctil',
+  'Pantalla', 'PIN', 'Red/Wifi', 'Software',
+  'Fuente de Alimentación',
+] as const;
+
+export const ESTADO_REPARACION = [
+  'ABIERTA', 'EN PROGRESO', 'CERRADA', 'CANCELADA',
+] as const;
+
+// --- WIKI (Intranet) ---
+export const WIKI_CATEGORIAS = [
+  'Políticas',
+  'Asignaciones',
+  'Cambios por Rotura',
+  'Envíos desde EC',
+  'Onboarding',
+  'Recupero',
+  'Robo/Pérdida',
+  'Insumos',
+  'Cotización',
+  'Roaming',
+  'Telefonía',
+  'Impresoras',
+  'Cierre de Tickets',
+] as const;
+
+// --- LINKS UTILES ---
+export const LINK_CATEGORIAS = [
+  'SAP',
+  'ServiceNow',
+  'Azure/Intune',
+  'Inventarios',
+  'Drivers/Software',
+  'Red/Conectividad',
+] as const;
+
+// --- MODULOS CONFIGURABLES ---
+export const MODULOS_CONFIGURABLES = [
+  { id: 'equipos', label: 'Equipos' },
+  { id: 'celulares', label: 'Celulares' },
+  { id: 'monitores', label: 'Monitores' },
+  { id: 'lineas', label: 'Líneas' },
+  { id: 'insumos', label: 'Insumos' },
+  { id: 'colaboradores', label: 'Colaboradores' },
+  { id: 'movimientos', label: 'Movimientos' },
+  { id: 'cortes', label: 'Cortes de Stock' },
+  { id: 'reparaciones', label: 'Reparaciones' },
+  { id: 'intranet', label: 'Intranet' },
+  { id: 'links', label: 'Links Útiles' },
+] as const;
+
+// --- SNOW GESTION TYPES (Ticket templates for movimientos) ---
+export const SNOW_GESTION_TYPES = [
+  { id: 'ASIGNACION_EQUIPO', label: 'Asignación de Equipo', shortDesc: 'ASIGNACION NOTEBOOK' },
+  { id: 'ASIGNACION_CELULAR', label: 'Asignación de Celular', shortDesc: 'ASIGNACION CELULAR' },
+  { id: 'ASIGNACION_INSUMO', label: 'Asignación de Insumo', shortDesc: 'ASIGNACION INSUMO' },
+  { id: 'ASIGNACION_INSUMO_SEC', label: 'Asignación de Insumo Secundario', shortDesc: 'ASIGNACION INSUMO' },
+  { id: 'RECUPERO_EQUIPO', label: 'Recupero de Equipo', shortDesc: 'RECUPERO DE EQUIPO' },
+  { id: 'ROBO_NOTEBOOK', label: 'Robo de Notebook', shortDesc: 'ROBO NOTEBOOK' },
+  { id: 'ROBO_CELULAR', label: 'Robo de Celular', shortDesc: 'ROBO CELULAR' },
+] as const;
+
 // --- SERVICENOW ---
 export const SNOW_CANALES = [
   'Service Desk', 'Walk-in', 'Email', 'Chat', 'Phone',
@@ -206,6 +288,11 @@ export const ESTADO_COLORS: Record<string, string> = {
   SAZ: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
   LAS: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
   ADMIN: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+  // Reparaciones
+  ABIERTA: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+  'EN PROGRESO': 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+  CERRADA: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+  CANCELADA: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
 };
 
 export const BRAND_COLORS = {

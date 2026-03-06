@@ -39,3 +39,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# large binary files (Excel templates, PDFs)
+*.xlsx
+*.pdf
+*.html
+_pdf_text.txt
+Links utiles.txt
+
+# dist output
+/dist

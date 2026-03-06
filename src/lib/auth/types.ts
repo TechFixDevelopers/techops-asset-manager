@@ -4,6 +4,7 @@ declare module 'next-auth' {
   interface User {
     perfil: string;
     username: string;
+    permisos?: { modulosHabilitados?: string[] } | null;
   }
 
   interface Session {
@@ -11,6 +12,7 @@ declare module 'next-auth' {
       id: string;
       perfil: string;
       username: string;
+      permisos?: { modulosHabilitados?: string[] } | null;
     } & DefaultSession['user'];
   }
 }
@@ -20,5 +22,6 @@ declare module '@auth/core/jwt' {
     id: string;
     perfil: string;
     username: string;
+    permisos?: { modulosHabilitados?: string[] } | null;
   }
 }

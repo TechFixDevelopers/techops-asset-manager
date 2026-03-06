@@ -114,10 +114,26 @@ export function generateBookmarklet(data: SnowTicketData): string {
   return `javascript:${encodeURIComponent(script)}`;
 }
 
+export function generateConsoleScript(data: SnowTicketData): string {
+  const s = (v: string) => sanitizeForJs(v);
+  return [
+    `g_form.setValue('short_description', '${s(data.shortDescription)}');`,
+    `g_form.setValue('description', '${s(data.description)}');`,
+    `g_form.setValue('u_symptom', '${s(data.symptom)}');`,
+    `g_form.setValue('contact_type', '${s(data.contactType)}');`,
+    `g_form.setValue('impact', '${s(data.impact)}');`,
+    `g_form.setValue('urgency', '${s(data.urgency)}');`,
+    `g_form.setValue('category', '${s(data.category)}');`,
+    `g_form.setValue('u_select_zone', '${s(data.zone)}');`,
+    `alert('Campos completados. Ingrese caller_id manualmente: ${s(data.callerLegajo)}');`,
+  ].join('\n');
+}
+
 export function generateClipboardResult(data: SnowTicketData): SnowClipboardResult {
   return {
     mode: 'clipboard',
     clipboardText: generateClipboardText(data),
+    consoleScript: generateConsoleScript(data),
     bookmarklet: generateBookmarklet(data),
     snowUrl: `${getInstanceUrl()}/nav_to.do?uri=incident.do?sys_id=-1`,
   };

@@ -18,6 +18,9 @@ export type InsumoStock = InferSelectModel<typeof schema.insumoStock>;
 export type Movimiento = InferSelectModel<typeof schema.movimientos>;
 export type CorteStock = InferSelectModel<typeof schema.cortesStock>;
 export type TicketSnow = InferSelectModel<typeof schema.ticketsSnow>;
+export type WikiPage = InferSelectModel<typeof schema.wikiPages>;
+export type LinkUtil = InferSelectModel<typeof schema.linksUtiles>;
+export type Reparacion = InferSelectModel<typeof schema.reparaciones>;
 
 // ============================================================
 // Insert types (what you pass when creating)
@@ -36,6 +39,9 @@ export type NewInsumoStock = InferInsertModel<typeof schema.insumoStock>;
 export type NewMovimiento = InferInsertModel<typeof schema.movimientos>;
 export type NewCorteStock = InferInsertModel<typeof schema.cortesStock>;
 export type NewTicketSnow = InferInsertModel<typeof schema.ticketsSnow>;
+export type NewWikiPage = InferInsertModel<typeof schema.wikiPages>;
+export type NewLinkUtil = InferInsertModel<typeof schema.linksUtiles>;
+export type NewReparacion = InferInsertModel<typeof schema.reparaciones>;
 
 // ============================================================
 // API Types
@@ -113,4 +119,10 @@ export interface MovimientoWithRelations extends Movimiento {
   insumo: { nombre: string } | null;
   monitor: { serialNumber: string } | null;
   sitio: { nombre: string } | null;
+}
+
+export interface ReparacionWithRelations extends Reparacion {
+  colaborador: { nombre: string; legajo: string } | null;
+  sitio: { nombre: string } | null;
+  operador: { nombre: string | null } | null;
 }

@@ -12,7 +12,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { exportToExcel } from '@/lib/utils/excel-export';
 import { ExportButton } from '@/components/shared/export-button';
 import { PageHeader } from '@/components/shared/page-header';
 import { FormDialog } from '@/components/shared/form-dialog';
@@ -165,17 +164,8 @@ export default function MonitoresPage() {
         isLoading={isLoading}
         toolbarActions={
           <ExportButton
-            onExport={() => {
-              const rows = (data?.data ?? []).map((m) => [
-                m.serialNumber, m.marca, m.modelo, m.pulgadas || '',
-                m.tipoMonitor || '', m.colaborador?.nombre || '', m.sitio?.nombre || '',
-                m.obsoleto ? 'Si' : 'No',
-              ]);
-              exportToExcel({
-                filename: 'monitores',
-                sheets: [{ name: 'Monitores', headers: ['Serial', 'Marca', 'Modelo', 'Pulgadas', 'Tipo', 'Colaborador', 'Sitio', 'Obsoleto'], rows }],
-              });
-            }}
+            exportUrl="/api/export/equipos"
+            exportFilename="Inventario EQUIPAMIENTO AR.xlsx"
           />
         }
       />

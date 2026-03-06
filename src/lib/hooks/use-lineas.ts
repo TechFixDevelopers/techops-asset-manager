@@ -8,6 +8,15 @@ import type { PaginatedResponse, Linea } from '@/lib/types/database';
 
 type LineaList = Linea & {
   sitio: { nombre: string } | null;
+  celulares?: {
+    id: string;
+    imei: string;
+    tipo: string;
+    marca: string;
+    modelo: string;
+    estado: string;
+    colaborador?: { nombre: string } | null;
+  }[];
 };
 
 export function useLineas(params: Record<string, unknown> = {}) {

@@ -22,6 +22,7 @@ export interface SnowApiResult {
 export interface SnowClipboardResult {
   mode: 'clipboard';
   clipboardText: string;
+  consoleScript: string;
   bookmarklet: string;
   snowUrl: string;
 }

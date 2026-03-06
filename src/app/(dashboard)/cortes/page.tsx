@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, FileDown } from 'lucide-react';
 
 import { useCortes, useCreateCorte } from '@/lib/hooks/use-cortes';
 import { useSitios } from '@/lib/hooks/use-catalogos';
@@ -75,9 +75,35 @@ export default function CortesPage() {
         title="Cortes de Stock"
         description="Snapshots de inventario fisico por sitio"
       >
-        <Button onClick={() => setFormOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Nuevo Corte
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={async () => {
+              try {
+                const params = new URLSearchParams();
+                if (sitioFilter) params.set('sitioId', sitioFilter);
+                if (desde) params.set('desde', desde);
+                if (hasta) params.set('hasta', hasta);
+                const res = await fetch(`/api/export/corte-stock?${params}`);
+                if (!res.ok) throw new Error('Error al exportar');
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Corte_Stock_${new Date().toISOString().split('T')[0]}.xlsx`;
+                a.click();
+                URL.revokeObjectURL(url);
+              } catch {
+                // toast handled by global error
+              }
+            }}
+          >
+            <FileDown className="mr-2 h-4 w-4" /> Exportar Movimientos
+          </Button>
+          <Button onClick={() => setFormOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Nuevo Corte
+          </Button>
+        </div>
       </PageHeader>
 
       {/* Filter bar */}

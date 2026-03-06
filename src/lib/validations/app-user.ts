@@ -6,6 +6,10 @@ import { paginationSchema } from './common';
 // Create / Update Schemas
 // ============================================================
 
+const permisosSchema = z.object({
+  modulosHabilitados: z.array(z.string()).optional(),
+}).optional();
+
 export const createAppUserSchema = z.object({
   username: z.string().min(3, 'Mínimo 3 caracteres').max(50, 'Máximo 50 caracteres'),
   password: z.string().min(8, 'Mínimo 8 caracteres'),
@@ -13,6 +17,7 @@ export const createAppUserSchema = z.object({
   nombre: z.string().optional(),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
   activo: z.boolean().default(true),
+  permisos: permisosSchema,
 });
 
 // Update doesn't require password (optional change)
@@ -23,6 +28,7 @@ export const updateAppUserSchema = z.object({
   nombre: z.string().optional(),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
   activo: z.boolean().optional(),
+  permisos: permisosSchema,
 });
 
 // ============================================================

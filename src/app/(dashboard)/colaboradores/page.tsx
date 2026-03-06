@@ -14,7 +14,6 @@ import {
 import { useEmpresas, useSitios } from '@/lib/hooks/use-catalogos';
 import type { CreateColaboradorInput } from '@/lib/validations/colaborador';
 
-import { exportToExcel } from '@/lib/utils/excel-export';
 import { ExportButton } from '@/components/shared/export-button';
 import { PageHeader } from '@/components/shared/page-header';
 import { DataTable } from '@/components/tables/data-table';
@@ -166,16 +165,8 @@ export default function ColaboradoresPage() {
         isLoading={isLoading}
         toolbarActions={
           <ExportButton
-            onExport={() => {
-              const rows = (data?.data ?? []).map((c) => [
-                c.legajo, c.nombre, c.email || '', c.empresa?.nombre || '',
-                c.sitio?.nombre || '', c.area || '', c.status || '',
-              ]);
-              exportToExcel({
-                filename: 'colaboradores',
-                sheets: [{ name: 'Colaboradores', headers: ['Legajo', 'Nombre', 'Email', 'Empresa', 'Sitio', 'Area', 'Estado'], rows }],
-              });
-            }}
+            exportUrl="/api/export/colaboradores"
+            exportFilename="INVENTARIOS-Datos Planos ARG.xlsx"
           />
         }
       />

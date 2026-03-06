@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { type ColumnDef } from '@tanstack/react-table';
 
-import { exportToExcel } from '@/lib/utils/excel-export';
 import { ExportButton } from '@/components/shared/export-button';
 import {
   useEquipos,
@@ -202,17 +201,8 @@ export default function EquiposPage() {
         isLoading={isLoading}
         toolbarActions={
           <ExportButton
-            onExport={() => {
-              const rows = (data?.data ?? []).map((e) => [
-                e.serialNumber, e.hostname || '', e.tipo, e.marca, e.modelo,
-                e.estado, e.estadoSecundario || '', e.colaborador?.nombre || '',
-                e.sitio?.nombre || '', e.obsoleto ? 'Si' : 'No',
-              ]);
-              exportToExcel({
-                filename: 'equipos',
-                sheets: [{ name: 'Equipos', headers: ['Serial', 'Hostname', 'Tipo', 'Marca', 'Modelo', 'Estado', 'Estado Sec.', 'Colaborador', 'Sitio', 'Obsoleto'], rows }],
-              });
-            }}
+            exportUrl="/api/export/equipos"
+            exportFilename="Inventario EQUIPAMIENTO AR.xlsx"
           />
         }
       />

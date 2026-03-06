@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "next-themes";
+import { SessionProvider } from "next-auth/react";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,14 +19,16 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body className="antialiased">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <QueryProvider>
-            <TooltipProvider>
-              {children}
-              <Toaster richColors closeButton position="top-right" />
-            </TooltipProvider>
-          </QueryProvider>
-        </ThemeProvider>
+        <SessionProvider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <QueryProvider>
+              <TooltipProvider>
+                {children}
+                <Toaster richColors closeButton position="top-right" />
+              </TooltipProvider>
+            </QueryProvider>
+          </ThemeProvider>
+        </SessionProvider>
       </body>
     </html>
   );
