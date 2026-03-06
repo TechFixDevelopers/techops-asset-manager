@@ -49,3 +49,10 @@ Links utiles.txt
 
 # dist output
 /dist
+
+# installer build artifacts (large binaries)
+/installer/staging
+/installer/downloads
+/installer/output
+/installer/icon/techops.ico
+/installer/license.txt

@@ -3,7 +3,61 @@
 ## Resumen
 
 Este documento describe como desplegar TechOps Asset Manager en la red interna de una empresa.
-Hay **3 opciones** de despliegue, ordenadas de mas simple a mas flexible.
+Hay **4 opciones** de despliegue, ordenadas de mas simple a mas flexible.
+
+---
+
+## Opcion 0: Instalador Windows .exe (Recomendada para empresas)
+
+Un unico archivo `.exe` firmado que instala todo automaticamente: Node.js, PostgreSQL, la aplicacion, y un servicio de Windows que arranca solo.
+
+### Requisitos del servidor destino
+- Windows 10/11 o Windows Server 2016+
+- 2 GB RAM disponible, 500 MB disco
+- Privilegios de Administrador para instalar
+
+### Generar el instalador (desde la PC de desarrollo)
+
+```powershell
+# 1. Ir a la carpeta del installer
+cd installer
+
+# 2. Ejecutar el script de build (descarga Node.js + PostgreSQL + compila la app)
+.\build-installer.ps1
+
+# 3. (Opcional) Reemplazar installer\icon\techops.ico con el logo de la empresa
+
+# 4. Abrir techops-setup.iss con Inno Setup Compiler (https://jrsoftware.org/isinfo.php)
+#    Build > Compile
+#    El .exe queda en: installer\output\TechOps-Asset-Manager-Setup-v1.0.0.exe
+```
+
+### Firmar el instalador
+
+```powershell
+# Con certificado .pfx
+signtool sign /f "MiCertificado.pfx" /p "password" /tr http://timestamp.digicert.com /td sha256 /fd sha256 "TechOps-Asset-Manager-Setup-v1.0.0.exe"
+
+# O directamente en el build:
+.\build-installer.ps1 -SignCert "MiCertificado.pfx" -SignPassword "password"
+```
+
+### Instalar en el servidor destino
+1. Copiar el `.exe` al servidor (USB, OneDrive, Google Drive)
+2. Ejecutar como **Administrador**
+3. Siguiente > Siguiente > Instalar
+4. El instalador automaticamente:
+   - Instala Node.js, PostgreSQL y la app en `C:\TechOps`
+   - Inicializa la base de datos y crea tablas
+   - Registra PostgreSQL como servicio de Windows
+   - Registra la app para auto-inicio con Windows
+   - Abre el firewall en puerto 3000
+   - Abre el navegador en `http://localhost:3000`
+5. Acceder desde cualquier PC en la red: `http://<ip-del-servidor>:3000`
+
+### Desinstalar
+Panel de Control > Programas > TechOps Asset Manager > Desinstalar
+(Para los servicios, la base de datos y las reglas de firewall automaticamente)
 
 ---
 
