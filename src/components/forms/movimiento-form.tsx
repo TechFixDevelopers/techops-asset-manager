@@ -9,6 +9,7 @@ import { useCelulares } from '@/lib/hooks/use-celulares';
 import { useInsumos } from '@/lib/hooks/use-insumos';
 import { useMonitores } from '@/lib/hooks/use-monitores';
 import { useSitios } from '@/lib/hooks/use-catalogos';
+import { useColaboradores } from '@/lib/hooks/use-colaboradores';
 import { ColaboradorCombobox } from '@/components/shared/colaborador-combobox';
 import {
   Form,
@@ -148,6 +149,10 @@ export function MovimientoForm({
   // --- Determine which tipo is "generic" ---
   const isGenericTipo = (GENERIC_TIPOS as readonly string[]).includes(tipo);
 
+  // --- Colaboradores data for reverse lookups ---
+  const { data: colaboradoresData } = useColaboradores({ pageSize: 500 });
+  const allColaboradores = colaboradoresData?.data ?? [];
+
   // --- Helpers for tipo change (reset dependent fields) ---
   const handleTipoChange = (value: string) => {
     form.reset(
@@ -155,6 +160,51 @@ export function MovimientoForm({
         tipo: value as CreateMovimientoInput['tipo'],
       }),
     );
+  };
+
+  // --- Auto-selection: colaborador → equipo/celular/sitio ---
+  const handleColaboradorAutoFill = (colaboradorId: string | null) => {
+    form.setValue('colaboradorId', colaboradorId);
+    if (!colaboradorId) return;
+
+    const col = allColaboradores.find((c) => c.id === colaboradorId);
+
+    // Auto-select equipo assigned to this colaborador
+    const assignedEquipo = allEquipos.find((e) => e.colaboradorId === colaboradorId);
+    if (assignedEquipo && !form.getValues('equipoId')) {
+      form.setValue('equipoId', assignedEquipo.id);
+    }
+
+    // Auto-select celular assigned to this colaborador
+    const assignedCelular = allCelulares.find((c) => c.colaboradorId === colaboradorId);
+    if (assignedCelular && !form.getValues('celularId')) {
+      form.setValue('celularId', assignedCelular.id);
+    }
+
+    // Auto-select sitio from colaborador
+    if (col?.sitioId && !form.getValues('sitioId')) {
+      form.setValue('sitioId', col.sitioId);
+    }
+  };
+
+  // --- Auto-selection: equipo → colaborador (for devoluciones) ---
+  const handleEquipoAutoFill = (equipoId: string | null) => {
+    form.setValue('equipoId', equipoId);
+    if (!equipoId) return;
+    const eq = allEquipos.find((e) => e.id === equipoId);
+    if (eq?.colaboradorId && !form.getValues('colaboradorId')) {
+      form.setValue('colaboradorId', eq.colaboradorId);
+    }
+  };
+
+  // --- Auto-selection: celular → colaborador (for devoluciones) ---
+  const handleCelularAutoFill = (celularId: string | null) => {
+    form.setValue('celularId', celularId);
+    if (!celularId) return;
+    const cel = allCelulares.find((c) => c.id === celularId);
+    if (cel?.colaboradorId && !form.getValues('colaboradorId')) {
+      form.setValue('colaboradorId', cel.colaboradorId);
+    }
   };
 
   return (
@@ -314,7 +364,7 @@ export function MovimientoForm({
                   <FormItem>
                     <FormLabel>Equipo *</FormLabel>
                     <Select
-                      onValueChange={(value) => field.onChange(value === '__none__' ? null : value)}
+                      onValueChange={(value) => handleEquipoAutoFill(value === '__none__' ? null : value)}
                       value={field.value ?? '__none__'}
                     >
                       <FormControl>
@@ -501,7 +551,7 @@ export function MovimientoForm({
                   <FormItem>
                     <FormLabel>Celular *</FormLabel>
                     <Select
-                      onValueChange={(value) => field.onChange(value === '__none__' ? null : value)}
+                      onValueChange={(value) => handleCelularAutoFill(value === '__none__' ? null : value)}
                       value={field.value ?? '__none__'}
                     >
                       <FormControl>
@@ -877,7 +927,7 @@ export function MovimientoForm({
                     <FormControl>
                       <ColaboradorCombobox
                         value={field.value}
-                        onValueChange={field.onChange}
+                        onValueChange={handleColaboradorAutoFill}
                       />
                     </FormControl>
                     <FormMessage />

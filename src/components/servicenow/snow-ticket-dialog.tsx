@@ -272,19 +272,55 @@ export function SnowTicketDialog({ open, onOpenChange, initialTypeId, initialFor
   // Auto-fill helpers
   const handleColaboradorSelect = (id: string | null) => {
     if (!id) {
-      setFormData((prev) => ({ ...prev, colaboradorId: '', legajo: '', nombre: '', banda: '' }));
+      setFormData((prev) => ({
+        ...prev,
+        colaboradorId: '', legajo: '', nombre: '', banda: '',
+        equipoId: '', equipoMarca: '', equipoModelo: '', equipoSerial: '',
+        celularId: '', celularMarca: '', celularModelo: '', celularImei: '', celularLinea: '',
+      }));
       return;
     }
     const c = colaboradores.find((x) => x.id === id);
-    if (c) {
-      setFormData((prev) => ({
-        ...prev,
-        colaboradorId: c.id,
-        legajo: c.legajo,
-        nombre: c.nombre,
-        banda: (c as Record<string, unknown>).band as string || '',
-      }));
+    if (!c) return;
+
+    const updates: Record<string, string> = {
+      colaboradorId: c.id,
+      legajo: c.legajo,
+      nombre: c.nombre,
+      banda: (c as Record<string, unknown>).band as string || '',
+    };
+
+    // Auto-select equipo assigned to this colaborador
+    const assignedEquipo = equipos.find((e) => e.colaboradorId === id);
+    if (assignedEquipo) {
+      updates.equipoId = assignedEquipo.id;
+      updates.equipoMarca = assignedEquipo.marca;
+      updates.equipoModelo = assignedEquipo.modelo;
+      updates.equipoSerial = assignedEquipo.serialNumber;
     }
+
+    // Auto-select celular assigned to this colaborador
+    const assignedCelular = celularesList.find((cel) => cel.colaboradorId === id);
+    if (assignedCelular) {
+      updates.celularId = assignedCelular.id;
+      updates.celularMarca = assignedCelular.marca;
+      updates.celularModelo = assignedCelular.modelo;
+      updates.celularImei = assignedCelular.imei;
+      updates.celularLinea = (assignedCelular as Record<string, unknown>).lineaNumero as string
+        || assignedCelular.linea?.numero || '';
+    }
+
+    // Auto-select sitio from colaborador
+    const cRecord = c as Record<string, unknown>;
+    if (cRecord.sitioId) {
+      const s = sitios.find((x) => x.id === cRecord.sitioId);
+      if (s) {
+        updates.sitioId = s.id;
+        updates.sitioNombre = s.nombre;
+      }
+    }
+
+    setFormData((prev) => ({ ...prev, ...updates }));
   };
 
   const handleEquipoSelect = (id: string) => {

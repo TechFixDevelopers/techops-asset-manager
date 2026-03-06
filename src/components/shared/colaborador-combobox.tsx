@@ -24,8 +24,13 @@ export function ColaboradorCombobox({ value, onValueChange, placeholder = 'Selec
 
   const selected = items.find((c) => c.id === value);
 
+  const handleSelect = (id: string | null) => {
+    onValueChange(id);
+    setOpen(false);
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen} modal>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -38,7 +43,12 @@ export function ColaboradorCombobox({ value, onValueChange, placeholder = 'Selec
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-full min-w-[300px] p-0" align="start">
+      <PopoverContent
+        className="w-full min-w-[300px] p-0"
+        align="start"
+        sideOffset={4}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+      >
         <Command shouldFilter={false}>
           <CommandInput
             placeholder="Buscar por nombre o legajo..."
@@ -50,10 +60,8 @@ export function ColaboradorCombobox({ value, onValueChange, placeholder = 'Selec
             <CommandGroup>
               <CommandItem
                 value="__none__"
-                onSelect={() => {
-                  onValueChange(null);
-                  setOpen(false);
-                }}
+                onSelect={() => handleSelect(null)}
+                onPointerDown={(e) => e.preventDefault()}
               >
                 <Check className={cn('mr-2 h-4 w-4', !value ? 'opacity-100' : 'opacity-0')} />
                 Sin asignar
@@ -62,10 +70,8 @@ export function ColaboradorCombobox({ value, onValueChange, placeholder = 'Selec
                 <CommandItem
                   key={c.id}
                   value={c.id}
-                  onSelect={() => {
-                    onValueChange(c.id);
-                    setOpen(false);
-                  }}
+                  onSelect={() => handleSelect(c.id)}
+                  onPointerDown={(e) => e.preventDefault()}
                 >
                   <Check className={cn('mr-2 h-4 w-4', value === c.id ? 'opacity-100' : 'opacity-0')} />
                   {c.legajo} - {c.nombre}
