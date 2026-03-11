@@ -30,6 +30,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { ColaboradorCombobox } from '@/components/shared/colaborador-combobox';
 import { useSitios } from '@/lib/hooks/use-catalogos';
+import { useEquipos } from '@/lib/hooks/use-equipos';
+import { useColaboradores } from '@/lib/hooks/use-colaboradores';
 
 interface ReparacionFormProps {
   defaultValues?: Partial<CreateReparacionInput>;
@@ -39,6 +41,10 @@ interface ReparacionFormProps {
 
 export function ReparacionForm({ defaultValues, onSubmit, isLoading }: ReparacionFormProps) {
   const { data: sitios } = useSitios();
+  const { data: equiposData } = useEquipos({ pageSize: 500 });
+  const { data: colaboradoresData } = useColaboradores({ pageSize: 500 });
+  const allEquipos = equiposData?.data ?? [];
+  const allColaboradores = colaboradoresData?.data ?? [];
 
   const form = useForm<CreateReparacionInput>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -58,6 +64,25 @@ export function ReparacionForm({ defaultValues, onSubmit, isLoading }: Reparacio
   });
 
   const tipoTarea = form.watch('tipoTarea');
+
+  // --- Auto-selection: colaborador → equipoRef + sitio ---
+  const handleColaboradorAutoFill = (colaboradorId: string | null) => {
+    form.setValue('colaboradorId', colaboradorId);
+    if (!colaboradorId) return;
+
+    const col = allColaboradores.find((c) => c.id === colaboradorId);
+
+    // Auto-fill equipoRef with assigned equipo's serial
+    const assignedEquipo = allEquipos.find((e) => e.colaboradorId === colaboradorId);
+    if (assignedEquipo && !form.getValues('equipoRef')) {
+      form.setValue('equipoRef', assignedEquipo.serialNumber);
+    }
+
+    // Auto-fill sitio from colaborador
+    if (col?.sitioId && !form.getValues('sitioId')) {
+      form.setValue('sitioId', col.sitioId);
+    }
+  };
   const reparacionesSel = form.watch('reparacionesRealizadas') ?? [];
 
   // Show equipment repair panel for hardware-related tasks
@@ -152,7 +177,7 @@ export function ReparacionForm({ defaultValues, onSubmit, isLoading }: Reparacio
               <FormControl>
                 <ColaboradorCombobox
                   value={field.value}
-                  onValueChange={field.onChange}
+                  onValueChange={handleColaboradorAutoFill}
                 />
               </FormControl>
               <FormMessage />
