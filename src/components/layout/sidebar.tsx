@@ -156,7 +156,7 @@ function SidebarContent({
                 {section.title}
               </p>
             )}
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               {section.links.map(({ href, label, icon: Icon }) => {
                 const active = isActive(href);
                 return (
@@ -164,13 +164,13 @@ function SidebarContent({
                     key={href}
                     href={href}
                     onClick={onLinkClick}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    className={`nav-tab flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium ${
                       active
-                        ? 'bg-gray-100 font-semibold text-[#54A0D6] dark:bg-gray-700'
-                        : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+                        ? 'nav-tab-active font-semibold text-[#54A0D6] dark:text-[#7dbde8]'
+                        : 'text-gray-600 dark:text-gray-300'
                     }`}
                   >
-                    <Icon className="h-5 w-5 shrink-0" />
+                    <Icon className="nav-tab-icon h-5 w-5 shrink-0" />
                     {label}
                   </Link>
                 );

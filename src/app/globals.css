@@ -86,7 +86,12 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-orbitron), sans-serif;
+  letter-spacing: 0.02em;
 }
 
 .dark {
@@ -130,4 +135,64 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* ── Sidebar nav: illuminated tech-blue tabs ── */
+
+@keyframes nav-glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(84, 160, 214, 0.35), inset 0 0 8px rgba(84, 160, 214, 0.08); }
+  50%      { box-shadow: 0 0 14px rgba(84, 160, 214, 0.5), inset 0 0 12px rgba(84, 160, 214, 0.12); }
+}
+
+.nav-tab {
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  will-change: transform;
+}
+
+.nav-tab::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: transparent;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.nav-tab:hover:not(.nav-tab-active) {
+  transform: translateX(3px);
+  background-color: rgba(84, 160, 214, 0.06);
+  box-shadow: 0 0 6px rgba(84, 160, 214, 0.12);
+}
+
+.nav-tab:hover:not(.nav-tab-active)::before {
+  background: rgba(84, 160, 214, 0.4);
+  box-shadow: 0 0 6px rgba(84, 160, 214, 0.3);
+}
+
+.nav-tab-active {
+  background: linear-gradient(135deg, rgba(84, 160, 214, 0.15) 0%, rgba(84, 160, 214, 0.08) 100%);
+  animation: nav-glow-pulse 3s ease-in-out infinite;
+  border-left: none;
+}
+
+.nav-tab-active::before {
+  background: #54A0D6;
+  box-shadow: 0 0 8px rgba(84, 160, 214, 0.6);
+}
+
+.dark .nav-tab:hover:not(.nav-tab-active) {
+  background-color: rgba(84, 160, 214, 0.1);
+  box-shadow: 0 0 8px rgba(84, 160, 214, 0.15);
+}
+
+.dark .nav-tab-active {
+  background: linear-gradient(135deg, rgba(84, 160, 214, 0.2) 0%, rgba(84, 160, 214, 0.08) 100%);
+}
+
+.nav-tab-active .nav-tab-icon {
+  filter: drop-shadow(0 0 4px rgba(84, 160, 214, 0.5));
 }
