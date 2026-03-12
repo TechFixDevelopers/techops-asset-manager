@@ -30,7 +30,7 @@ import { useSitios } from '@/lib/hooks/use-catalogos';
 import { SNOW_GESTION_TEMPLATES, type SnowGestionType } from '@/lib/utils/snow-ticket-templates';
 
 const SNOW_INSTANCE = 'https://abinbevww.service-now.com';
-const SNOW_NEW_INC = `${SNOW_INSTANCE}/nav_to.do?uri=incident.do?sys_id=-1`;
+const SNOW_NEW_INC = `${SNOW_INSTANCE}/incident.do?sys_id=-1`;
 const CLIPBOARD_PREFIX = 'SAZ_V13::';
 
 // Bookmarklet — exact code from user (sR=setRef, sS=setStr)
@@ -75,6 +75,7 @@ interface SnowConfig {
   zone: string;
   assignmentGroup: string;
   impact: string;
+  locationSysId: string;
 }
 
 const SNOW_DEFAULTS: SnowConfig = {
@@ -85,6 +86,7 @@ const SNOW_DEFAULTS: SnowConfig = {
   zone: 'SAZ',
   assignmentGroup: 'SAZ Digital CORE - Front Tech Argentina',
   impact: '3',
+  locationSysId: '2eb371c297fe655027d47ad3f153aff5',
 };
 
 const SNOW_OPTIONS = {
@@ -374,7 +376,7 @@ export function SnowTicketDialog({ open, onOpenChange, initialTypeId, initialFor
       canal: snowConfig.canal,
       impact: snowConfig.impact,
       zone: snowConfig.zone,
-      loc: formData.sitioNombre || '',
+      loc: snowConfig.locationSysId || formData.sitioNombre || '',
       cat: snowConfig.serviceClass,
     };
 
@@ -678,15 +680,26 @@ export function SnowTicketDialog({ open, onOpenChange, initialTypeId, initialFor
                         </SelectContent>
                       </Select>
                     </div>
-                    {/* Row 5: Impacto */}
-                    <div className="max-w-[200px]">
-                      <Label className="text-[11px] font-medium text-muted-foreground">Impacto</Label>
-                      <Select value={snowConfig.impact} onValueChange={(v) => updateSnowConfig('impact', v)}>
-                        <SelectTrigger className="h-9 text-xs w-full"><SelectValue /></SelectTrigger>
-                        <SelectContent position="popper">
-                          {SNOW_OPTIONS.impact.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
+                    {/* Row 5: Impacto + Location sys_id */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="min-w-0">
+                        <Label className="text-[11px] font-medium text-muted-foreground">Impacto</Label>
+                        <Select value={snowConfig.impact} onValueChange={(v) => updateSnowConfig('impact', v)}>
+                          <SelectTrigger className="h-9 text-xs w-full"><SelectValue /></SelectTrigger>
+                          <SelectContent position="popper">
+                            {SNOW_OPTIONS.impact.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="min-w-0">
+                        <Label className="text-[11px] font-medium text-muted-foreground">Location (sys_id)</Label>
+                        <Input
+                          className="h-9 text-xs"
+                          value={snowConfig.locationSysId}
+                          onChange={(e) => updateSnowConfig('locationSysId', e.target.value)}
+                          placeholder="sys_id de location en ServiceNow"
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
